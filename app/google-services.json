@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "251853786359",
+    "project_id": "lubricante-75246",
+    "storage_bucket": "lubricante-75246.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:251853786359:android:63109cbef65aa2d04f17f2",
+        "android_client_info": {
+          "package_name": "com.example.dlosasmovileapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBg21P6gON8Nc4LiXytEKJHKR_CY0Ke0ls"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:251853786359:android:bee9238eb7cde6b44f17f2",
+        "android_client_info": {
+          "package_name": "com.example.proyecto"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBg21P6gON8Nc4LiXytEKJHKR_CY0Ke0ls"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
