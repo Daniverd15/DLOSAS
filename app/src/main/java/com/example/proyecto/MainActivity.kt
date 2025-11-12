@@ -33,58 +33,7 @@ class MainActivity : AppCompatActivity() {
                 .replace(R.id.fragment_container, DomicilioFragment())
                 .commit()
         }
-        setContent {
-            AppTheme {
-                val vm: AuthViewModel = viewModel()
-                val state by vm.state.collectAsState()
-                val repo = remember { UserRepository() }
-                val snackBar = remember { SnackbarHostState() }
-                val scope = rememberCoroutineScope()
 
-                LaunchedEffect(Unit) {
-                    vm.events.collect { e ->
-                        when (e) {
-                            is AuthEvent.Success -> {
-                                // TODO: navegar a Admin o Home usuario
-                                scope.launch {
-                                    snackBar.showSnackbar(
-                                        if (e.isAdmin) "Admin OK" else "Login OK"
-                                    )
-                                }
-                            }
-                            is AuthEvent.Error -> scope.launch {
-                                snackBar.showSnackbar(e.message)
-                            }
-                        }
-                    }
-                }
-
-                Scaffold(
-                    snackbarHost = { SnackbarHost(snackBar) }
-                ) { padding ->   // <-- usa el padding que entrega Scaffold
-                    Box(
-                        modifier = androidx.compose.ui.Modifier
-                            .fillMaxSize()
-                            .padding(padding) // <-- aplicado aquí
-                    ) {
-                        LoginScreen(
-                            email = state.email,
-                            password = state.password,
-                            onEmailChange = vm::updateEmail,
-                            onPasswordChange = vm::updatePassword,
-                            onLoginClick = { vm.signIn { uid -> repo.isAdmin(uid) } },
-                            onForgotClick = {
-                                vm.sendReset {
-                                    scope.launch { snackBar.showSnackbar("Correo enviado") }
-                                }
-                            },
-                            onRegisterClick = { /* TODO: ir a registro */ },
-                            loading = state.loading
-                        )
-                    }
-                }
-            }
-        }
     }
 
 }
