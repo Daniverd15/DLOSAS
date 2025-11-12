@@ -1,158 +1,199 @@
 package com.example.proyecto.ui.theme
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.example.proyecto.R
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.Marker
-import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.gms.maps.model.PolylineOptions
-import org.json.JSONObject
-import java.net.URL
-import javax.net.ssl.HttpsURLConnection
-import kotlin.concurrent.thread
+import com.google.android.gms.maps.model.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 class MapaFragment : Fragment(), OnMapReadyCallback {
 
-    private lateinit var mMap: GoogleMap
-    private var markerInicio: Marker? = null
-    private var markerDestino: Marker? = null
+    private lateinit var map: GoogleMap
+    private var start = ""
+    private var end = ""
+    private var startMarker: Marker? = null
+    private var endMarker: Marker? = null
+    private lateinit var infoLayout: LinearLayout
+    private lateinit var distanceText: TextView
+    private lateinit var durationText: TextView
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_mapa, container, false)
 
+        // Inicializar fragmento del mapa
         val mapFragment = childFragmentManager
-            .findFragmentById(R.id.map_fragment) as SupportMapFragment
-        mapFragment.getMapAsync(this)
+            .findFragmentById(R.id.map_fragment) as? SupportMapFragment
+
+        if (mapFragment == null) {
+            Toast.makeText(requireContext(), "Error: mapa no encontrado", Toast.LENGTH_SHORT).show()
+        } else {
+            com.google.android.gms.maps.MapsInitializer.initialize(requireContext())
+            mapFragment.getMapAsync(this)
+        }
+
+        // Referencias UI
+        val btnCalculate = view.findViewById<Button>(R.id.btnCalculateRouter)
+        infoLayout = view.findViewById(R.id.infoLayout)
+        distanceText = view.findViewById(R.id.textDistance)
+        durationText = view.findViewById(R.id.textDuration)
+
+        // Acción principal
+        btnCalculate.setOnClickListener {
+            if (::map.isInitialized) {
+                map.clear()
+                start = ""
+                end = ""
+                startMarker = null
+                endMarker = null
+                infoLayout.visibility = View.GONE
+
+                Toast.makeText(requireContext(), "Toque el mapa para elegir origen y destino", Toast.LENGTH_SHORT).show()
+
+                map.setOnMapClickListener { point ->
+                    if (start.isEmpty()) {
+                        start = "${point.longitude},${point.latitude}" // ORS usa long,lat
+                        startMarker = map.addMarker(
+                            MarkerOptions()
+                                .position(point)
+                                .title("Origen")
+                                .icon(bitmapDescriptorFromVector(R.drawable.ic_start))
+                        )
+                        Toast.makeText(requireContext(), "Origen seleccionado", Toast.LENGTH_SHORT).show()
+                    } else if (end.isEmpty()) {
+                        end = "${point.longitude},${point.latitude}" // ORS usa long,lat
+                        endMarker = map.addMarker(
+                            MarkerOptions()
+                                .position(point)
+                                .title("Destino")
+                                .icon(bitmapDescriptorFromVector(R.drawable.ic_end))
+                        )
+                        Toast.makeText(requireContext(), "Destino seleccionado", Toast.LENGTH_SHORT).show()
+                        createRoute()
+                    }
+                }
+            } else {
+                Toast.makeText(requireContext(), "El mapa no está listo", Toast.LENGTH_SHORT).show()
+            }
+        }
 
         return view
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
-        mMap = googleMap
-
-        Toast.makeText(requireContext(), "Toque el mapa para marcar origen y destino", Toast.LENGTH_LONG).show()
-
-        // Centra la cámara (por ejemplo, Bucaramanga)
-        val inicio = LatLng(7.1193, -73.1227)
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(inicio, 13f))
-
-        // Escuchar los toques del usuario
-        mMap.setOnMapClickListener { latLng ->
-            if (markerInicio == null) {
-                // Primer toque: punto de inicio
-                markerInicio = mMap.addMarker(
-                    MarkerOptions().position(latLng).title("Inicio")
-                )
-            } else if (markerDestino == null) {
-                // Segundo toque: punto de destino
-                markerDestino = mMap.addMarker(
-                    MarkerOptions().position(latLng).title("Destino")
-                )
-                // Dibujar la ruta entre los dos puntos
-                trazarRuta(markerInicio!!.position, markerDestino!!.position)
-            } else {
-                // Reiniciar selección
-                mMap.clear()
-                markerInicio = mMap.addMarker(MarkerOptions().position(latLng).title("Inicio"))
-                markerDestino = null
-            }
-        }
+        map = googleMap
+        map.uiSettings.isZoomControlsEnabled = true
+        val initialLocation = LatLng(7.119349, -73.122741) // Bucaramanga
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLocation, 13f))
     }
 
-    private fun trazarRuta(origen: LatLng, destino: LatLng) {
-        val apiKey = getString(R.string.google_maps_key)
-        val url = "https://maps.googleapis.com/maps/api/directions/json?" +
-                "origin=${origen.latitude},${origen.longitude}" +
-                "&destination=${destino.latitude},${destino.longitude}" +
-                "&key=$apiKey"
-
-        thread {
+    // Crear la ruta con OpenRouteService
+    private fun createRoute() {
+        CoroutineScope(Dispatchers.IO).launch {
             try {
-                val connection = URL(url).openConnection() as HttpsURLConnection
-                connection.requestMethod = "GET"
-                connection.connect()
+                val apiKey = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImJlYjdhNDg4OWViOTRhMWZiOTczZTlkM2NmODFkYmEzIiwiaCI6Im11cm11cjY0In0=" // 🔑 reemplaza con tu clave real de OpenRouteService
+                val call = getRetrofit().create(ApiService::class.java)
+                    .getRoute(apiKey, start, end)
 
-                val data = connection.inputStream.bufferedReader().readText()
-                connection.disconnect()
-
-                val json = JSONObject(data)
-                val routes = json.getJSONArray("routes")
-                if (routes.length() == 0) {
-                    requireActivity().runOnUiThread {
-                        Toast.makeText(requireContext(), "No se encontró ruta", Toast.LENGTH_SHORT).show()
+                if (call.isSuccessful) {
+                    val routeResponse = call.body()
+                    if (!routeResponse?.features.isNullOrEmpty()) {
+                        Log.i("RUTA", "Ruta ORS recibida correctamente")
+                        drawRouteORS(routeResponse)
+                    } else {
+                        showToast("No se encontró una ruta entre los puntos")
+                        Log.e("RUTA", "Respuesta vacía o sin rutas")
                     }
-                    return@thread
+                } else {
+                    Log.e("RUTA", "Error HTTP ${call.code()} - ${call.message()}")
+                    showToast("Error de conexión con OpenRouteService (${call.code()})")
                 }
-
-                val puntos = decodificarRuta(
-                    routes.getJSONObject(0)
-                        .getJSONObject("overview_polyline")
-                        .getString("points")
-                )
-
-                requireActivity().runOnUiThread {
-                    val polylineOptions = PolylineOptions()
-                        .addAll(puntos)
-                        .width(10f)
-                        .color(Color.BLUE)
-                    mMap.addPolyline(polylineOptions)
-                }
-
             } catch (e: Exception) {
-                e.printStackTrace()
-                requireActivity().runOnUiThread {
-                    Toast.makeText(requireContext(), "Error al obtener la ruta", Toast.LENGTH_SHORT).show()
-                }
+                Log.e("RUTA", "Error: ${e.message}")
+                showToast("Error: ${e.localizedMessage}")
             }
         }
     }
 
-    private fun decodificarRuta(encoded: String): List<LatLng> {
-        val poly = ArrayList<LatLng>()
-        var index = 0
-        val len = encoded.length
-        var lat = 0
-        var lng = 0
+    // Dibujar la ruta y mostrar la información
+    private fun drawRouteORS(routeResponse: RouteResponseORS?) {
+        val coordinates = routeResponse?.features?.firstOrNull()?.geometry?.coordinates ?: return
+        val polylineOptions = PolylineOptions()
+            .width(10f)
+            .color(Color.BLUE)
 
-        while (index < len) {
-            var b: Int
-            var shift = 0
-            var result = 0
-            do {
-                b = encoded[index++].code - 63
-                result = result or (b and 0x1f shl shift)
-                shift += 5
-            } while (b >= 0x20)
-            val dlat = if (result and 1 != 0) (result shr 1).inv() else result shr 1
-            lat += dlat
-
-            shift = 0
-            result = 0
-            do {
-                b = encoded[index++].code - 63
-                result = result or (b and 0x1f shl shift)
-                shift += 5
-            } while (b >= 0x20)
-            val dlng = if (result and 1 != 0) (result shr 1).inv() else result shr 1
-            lng += dlng
-
-            val latLng = LatLng(lat / 1E5, lng / 1E5)
-            poly.add(latLng)
+        for (coord in coordinates) {
+            val lon = coord[0]
+            val lat = coord[1]
+            polylineOptions.add(LatLng(lat, lon))
         }
 
-        return poly
+        val summary = routeResponse.features?.firstOrNull()?.properties?.summary
+        val distancia = summary?.distance?.div(1000)?.let { String.format("%.2f km", it) } ?: "Desconocida"
+        val duracion = summary?.duration?.div(60)?.let { String.format("%.1f min", it) } ?: "Desconocido"
+
+        requireActivity().runOnUiThread {
+            map.addPolyline(polylineOptions)
+
+            // Centrar cámara
+            val boundsBuilder = LatLngBounds.Builder()
+            for (point in polylineOptions.points) boundsBuilder.include(point)
+            val bounds = boundsBuilder.build()
+            map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 150))
+
+            // Mostrar la info de distancia y tiempo
+            distanceText.text = "Distancia: $distancia"
+            durationText.text = "Duración: $duracion"
+            infoLayout.visibility = View.VISIBLE
+        }
+    }
+
+    private fun getRetrofit(): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl("https://api.openrouteservice.org/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+
+    private fun showToast(msg: String) {
+        requireActivity().runOnUiThread {
+            Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun bitmapDescriptorFromVector(vectorResId: Int): BitmapDescriptor {
+        val vectorDrawable = ContextCompat.getDrawable(requireContext(), vectorResId)
+        vectorDrawable!!.setBounds(0, 0, vectorDrawable.intrinsicWidth, vectorDrawable.intrinsicHeight)
+        val bitmap = Bitmap.createBitmap(
+            vectorDrawable.intrinsicWidth,
+            vectorDrawable.intrinsicHeight,
+            Bitmap.Config.ARGB_8888
+        )
+        val canvas = Canvas(bitmap)
+        vectorDrawable.draw(canvas)
+        return BitmapDescriptorFactory.fromBitmap(bitmap)
     }
 }
