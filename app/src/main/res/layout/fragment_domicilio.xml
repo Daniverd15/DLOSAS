@@ -1,14 +1,322 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center"
-    android:orientation="vertical">
+    android:background="#F5EFE6"
+    tools:context=".ui.theme.DomicilioFragment">
 
-    <Button
-        android:id="@+id/btnSolicitar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Solicitar servicio" />
-</LinearLayout>
+    <!-- ScrollView para todo el contenido -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <!-- Saludo al usuario -->
+            <TextView
+                android:id="@+id/tvUsuario"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="¡Hola, Usuario!"
+                android:textSize="24sp"
+                android:textColor="#103A63"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp"/>
+
+            <!-- Título -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Servicio a Domicilio"
+                android:textSize="28sp"
+                android:textColor="#103A63"
+                android:textStyle="bold"
+                android:layout_marginBottom="24dp"/>
+
+            <!-- Card con información del servicio -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardBackgroundColor="#F7C948"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="16dp"
+                    android:gravity="center_vertical">
+
+                    <ImageView
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:src="@android:drawable/ic_dialog_info"
+                        android:tint="#103A63"
+                        android:contentDescription="Info"/>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="16dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Cambio de aceite en tu ubicación"
+                            android:textSize="16sp"
+                            android:textColor="#103A63"
+                            android:textStyle="bold"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Servicio rápido y profesional"
+                            android:textSize="14sp"
+                            android:textColor="#103A63"
+                            android:layout_marginTop="4dp"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Formulario en Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="3dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Datos de la solicitud"
+                        android:textSize="18sp"
+                        android:textColor="#103A63"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="16dp"/>
+
+                    <!-- Dirección -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        app:boxBackgroundMode="outline"
+                        app:boxCornerRadiusBottomEnd="8dp"
+                        app:boxCornerRadiusBottomStart="8dp"
+                        app:boxCornerRadiusTopEnd="8dp"
+                        app:boxCornerRadiusTopStart="8dp"
+                        app:boxStrokeColor="#F7C948"
+                        app:startIconDrawable="@android:drawable/ic_dialog_map"
+                        app:startIconTint="#103A63">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etDireccion"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="Dirección completa"
+                            android:inputType="textPostalAddress"
+                            android:textSize="16sp"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Teléfono -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        app:boxBackgroundMode="outline"
+                        app:boxCornerRadiusBottomEnd="8dp"
+                        app:boxCornerRadiusBottomStart="8dp"
+                        app:boxCornerRadiusTopEnd="8dp"
+                        app:boxCornerRadiusTopStart="8dp"
+                        app:boxStrokeColor="#F7C948"
+                        app:startIconDrawable="@android:drawable/ic_menu_call"
+                        app:startIconTint="#103A63">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etTelefono"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="Teléfono de contacto"
+                            android:inputType="phone"
+                            android:maxLength="10"
+                            android:textSize="16sp"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Notas adicionales -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:boxBackgroundMode="outline"
+                        app:boxCornerRadiusBottomEnd="8dp"
+                        app:boxCornerRadiusBottomStart="8dp"
+                        app:boxCornerRadiusTopEnd="8dp"
+                        app:boxCornerRadiusTopStart="8dp"
+                        app:boxStrokeColor="#F7C948"
+                        app:startIconDrawable="@android:drawable/ic_menu_edit"
+                        app:startIconTint="#103A63">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etNotas"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="Notas adicionales (opcional)"
+                            android:inputType="textMultiLine"
+                            android:minLines="3"
+                            android:gravity="top|start"
+                            android:textSize="16sp"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Características del servicio -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="¿Qué incluye el servicio?"
+                    android:textSize="16sp"
+                    android:textColor="#103A63"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp"/>
+
+                <!-- Feature 1 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@android:drawable/checkbox_on_background"
+                        android:tint="#4CAF50"
+                        android:contentDescription="Check"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Cambio de aceite Havoline de calidad"
+                        android:textSize="14sp"
+                        android:textColor="#1E2A36"
+                        android:layout_marginStart="8dp"/>
+                </LinearLayout>
+
+                <!-- Feature 2 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@android:drawable/checkbox_on_background"
+                        android:tint="#4CAF50"
+                        android:contentDescription="Check"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Filtro de aceite nuevo"
+                        android:textSize="14sp"
+                        android:textColor="#1E2A36"
+                        android:layout_marginStart="8dp"/>
+                </LinearLayout>
+
+                <!-- Feature 3 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@android:drawable/checkbox_on_background"
+                        android:tint="#4CAF50"
+                        android:contentDescription="Check"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Revisión de niveles de fluidos"
+                        android:textSize="14sp"
+                        android:textColor="#1E2A36"
+                        android:layout_marginStart="8dp"/>
+                </LinearLayout>
+
+                <!-- Feature 4 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@android:drawable/checkbox_on_background"
+                        android:tint="#4CAF50"
+                        android:contentDescription="Check"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Técnico certificado a tu puerta"
+                        android:textSize="14sp"
+                        android:textColor="#1E2A36"
+                        android:layout_marginStart="8dp"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Botón de solicitar -->
+            <Button
+                android:id="@+id/btnSolicitar"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="SOLICITAR SERVICIO"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:backgroundTint="#F7C948"
+                android:textColor="#103A63"
+                app:cornerRadius="12dp"
+                android:elevation="4dp"/>
+
+            <!-- Nota al final -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="* Tiempo estimado de llegada: 30-45 minutos"
+                android:textSize="12sp"
+                android:textColor="#475569"
+                android:layout_gravity="center"
+                android:layout_marginTop="16dp"/>
+        </LinearLayout>
+    </ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>
