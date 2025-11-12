@@ -10,6 +10,10 @@ import kotlinx.coroutines.launch
 data class AuthUiState(
     val email: String = "",
     val password: String = "",
+    val username: String = "",
+    val confirmPassword: String = "",
+    val phone: String = "",
+
     val loading: Boolean = false,
     val error: String? = null
 )
@@ -31,6 +35,11 @@ class AuthViewModel(
 
     fun updateEmail(e: String) = _state.update { it.copy(email = e) }
     fun updatePassword(p: String) = _state.update { it.copy(password = p) }
+
+    // 2. **AGREGAR UPDATE FUNCTIONS**
+    fun updateUsername(u: String) = _state.update { it.copy(username = u) }
+    fun updateConfirmPassword(cp: String) = _state.update { it.copy(confirmPassword = cp) }
+    fun updatePhone(ph: String) = _state.update { it.copy(phone = ph) }
 
     fun signIn(checkAdmin: suspend (String) -> Boolean) {
         val email = state.value.email.trim()
@@ -62,5 +71,71 @@ class AuthViewModel(
             return
         }
         auth.sendPasswordResetEmail(email).addOnSuccessListener { onSent() }
+    }
+
+    // Agrega la función para crear un nuevo usuario
+    fun signUp(onUidReceived: (String?) -> Unit) {
+        val s = state.value
+        val email = s.email.trim()
+        val pass = s.password
+        val confirmPass = s.confirmPassword
+        val username = s.username.trim()
+        val phone = s.phone.trim() // Aunque no se usa directamente en Firebase Auth estándar, es bueno validar
+
+        // 1. Validaciones
+        if (email.isBlank() || pass.isBlank() || confirmPass.isBlank() || username.isBlank() || phone.isBlank()) {
+            viewModelScope.launch { _events.send(AuthEvent.Error("Completa todos los campos.")) }
+            return
+        }
+        if (pass != confirmPass) {
+            viewModelScope.launch { _events.send(AuthEvent.Error("Las contraseñas no coinciden.")) }
+            return
+        }
+        if (pass.length < 6) {
+            viewModelScope.launch { _events.send(AuthEvent.Error("La contraseña debe tener al menos 6 caracteres.")) }
+            return
+        }
+
+        _state.update { it.copy(loading = true, error = null) }
+
+        // 2. Creación de Usuario en Firebase
+        auth.createUserWithEmailAndPassword(email, pass)
+            .addOnCompleteListener { task ->
+                viewModelScope.launch { // Corrutina 1: Manejo principal
+                    _state.update { it.copy(loading = false) }
+
+                    if (task.isSuccessful) {
+                        val user = auth.currentUser
+                        val uid = user?.uid
+
+                        // 3. Actualización de Perfil (Username)
+                        val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                            .setDisplayName(username)
+                            .build()
+
+                        user?.updateProfile(profileUpdates)
+                            ?.addOnCompleteListener { profileTask ->
+
+                                // Corrutina 2: Manejo de la sub-tarea de actualización de perfil
+                                viewModelScope.launch {
+                                    if (profileTask.isSuccessful) {
+                                        // Éxito completo: usuario creado y nombre guardado
+                                        _events.send(AuthEvent.Success(isAdmin = false))
+                                        onUidReceived(uid)
+                                    } else {
+                                        // Error al guardar el nombre
+                                        _events.send(AuthEvent.Error(profileTask.exception?.localizedMessage ?: "Registro exitoso, pero falló al guardar el nombre."))
+                                        onUidReceived(null)
+                                    }
+                                }
+                            }
+                    } else {
+                        // Error en la creación inicial de la cuenta
+                        val errorMessage = task.exception?.localizedMessage ?: "Error desconocido al crear cuenta"
+                        _events.send(AuthEvent.Error(errorMessage))
+                        onUidReceived(null)
+                    }
+                } // Cierre de Corrutina 1
+            }
     }
 }
