@@ -1,7 +1,23 @@
 package com.example.proyecto.ui.theme
 
-import com.google.gson.annotations.SerializedName
+data class RouteResponse(
+    val routes: List<Route>?,
+    val status: String?
+)
 
-data class RouteResponse(@SerializedName("features")val features:List<Feature>)
-data class Feature(@SerializedName("geometry") val geometry:Geometry)
-data class Geometry(@SerializedName("coordinates") val coordinates:List<List<Double>> )
+data class Route(
+    val overview_polyline: OverviewPolyline?,
+    val legs: List<Leg>?
+)
+
+data class OverviewPolyline(
+    val points: String?
+)
+
+data class Leg(
+    val distance: Distance?,
+    val duration: Duration?
+)
+
+data class Distance(val text: String?)
+data class Duration(val text: String?)
