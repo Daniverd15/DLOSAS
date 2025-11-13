@@ -6,8 +6,10 @@ import HavolineYellow
 import TextPrimary
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -20,19 +22,44 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     onBackClick: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onNavigateToEditProfile: () -> Unit,
+    onNavigateToChangePassword: () -> Unit
 ) {
     val auth = FirebaseAuth.getInstance()
     val currentUser = auth.currentUser
+    val db = FirebaseFirestore.getInstance()
 
-    val displayName = currentUser?.displayName ?: "Usuario"
-    val email = currentUser?.email ?: "correo@ejemplo.com"
-    val phoneNumber = currentUser?.phoneNumber ?: "No disponible"
+    var userData by remember { mutableStateOf<Map<String, Any>?>(null) }
+    var loading by remember { mutableStateOf(true) }
+
+    // Cargar datos de Firestore
+    LaunchedEffect(Unit) {
+        try {
+            val uid = currentUser?.uid
+            if (uid != null) {
+                val document = db.collection("users").document(uid).get().await()
+                userData = document.data
+            }
+        } catch (e: Exception) {
+            // Manejar error silenciosamente
+        } finally {
+            loading = false
+        }
+    }
+
+    val displayName = userData?.get("username") as? String ?: currentUser?.displayName ?: "Usuario"
+    val email = userData?.get("email") as? String ?: currentUser?.email ?: "correo@ejemplo.com"
+    val phoneNumber = userData?.get("phone") as? String ?: "No disponible"
+    val isAdmin = userData?.get("isAdmin") as? Boolean ?: false
+    val createdAt = userData?.get("createdAt") as? com.google.firebase.Timestamp
 
     Scaffold(
         topBar = {
@@ -50,87 +77,251 @@ fun ProfileScreen(
             )
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Cream)
-                .padding(padding)
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Avatar del usuario
+        if (loading) {
             Box(
                 modifier = Modifier
-                    .size(120.dp)
-                    .clip(CircleShape)
-                    .background(HavolineYellow),
+                    .fillMaxSize()
+                    .background(Cream)
+                    .padding(padding),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    Icons.Default.Person,
-                    contentDescription = "Avatar",
-                    modifier = Modifier.size(80.dp),
-                    tint = ChevronBlue
+                CircularProgressIndicator(color = HavolineYellow)
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Cream)
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Avatar del usuario con badge de admin si aplica
+                Box(
+                    modifier = Modifier.size(140.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(120.dp)
+                            .clip(CircleShape)
+                            .background(HavolineYellow)
+                            .align(Alignment.Center),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.Person,
+                            contentDescription = "Avatar",
+                            modifier = Modifier.size(80.dp),
+                            tint = ChevronBlue
+                        )
+                    }
+
+                    // Badge de Admin
+                    if (isAdmin) {
+                        Surface(
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .offset(x = (-8).dp, y = (-8).dp),
+                            color = Color(0xFFB00020),
+                            shape = CircleShape
+                        ) {
+                            Icon(
+                                Icons.Default.Star,
+                                contentDescription = "Admin",
+                                modifier = Modifier
+                                    .padding(8.dp)
+                                    .size(24.dp),
+                                tint = Color.White
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                Text(
+                    text = displayName,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
                 )
-            }
 
-            Spacer(Modifier.height(16.dp))
+                if (isAdmin) {
+                    Spacer(Modifier.height(4.dp))
+                    Surface(
+                        color = Color(0xFFB00020),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = "ADMINISTRADOR",
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }
 
-            Text(
-                text = displayName,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary
-            )
+                Spacer(Modifier.height(32.dp))
 
-            Spacer(Modifier.height(32.dp))
+                // Sección: Información Personal
+                SectionHeader("Información Personal")
+                Spacer(Modifier.height(12.dp))
 
-            // Información del perfil
-            ProfileInfoCard(
-                icon = Icons.Default.Email,
-                label = "Correo electrónico",
-                value = email
-            )
+                ProfileInfoCard(
+                    icon = Icons.Default.Email,
+                    label = "Correo electrónico",
+                    value = email
+                )
 
-            Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(12.dp))
 
-            ProfileInfoCard(
-                icon = Icons.Default.Phone,
-                label = "Teléfono",
-                value = phoneNumber
-            )
+                ProfileInfoCard(
+                    icon = Icons.Default.Phone,
+                    label = "Teléfono",
+                    value = phoneNumber
+                )
 
-            Spacer(Modifier.height(32.dp))
+                Spacer(Modifier.height(12.dp))
 
-            // Botones de acción
-            Button(
-                onClick = { /* TODO: Editar perfil */ },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = HavolineYellow),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Icon(Icons.Default.Edit, contentDescription = null, tint = ChevronBlue)
-                Spacer(Modifier.width(8.dp))
-                Text("EDITAR PERFIL", color = ChevronBlue, fontWeight = FontWeight.Bold)
-            }
+                ProfileInfoCard(
+                    icon = Icons.Default.AccountCircle,
+                    label = "ID de Usuario",
+                    value = currentUser?.uid?.take(8) ?: "N/A"
+                )
 
-            Spacer(Modifier.height(16.dp))
+                // Sección: Cuenta
+                Spacer(Modifier.height(32.dp))
+                SectionHeader("Configuración de Cuenta")
+                Spacer(Modifier.height(12.dp))
 
-            OutlinedButton(
-                onClick = onLogout,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFB00020)),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Icon(Icons.Default.ExitToApp, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("CERRAR SESIÓN", fontWeight = FontWeight.Bold)
+                // Botón Editar Perfil
+                Button(
+                    onClick = onNavigateToEditProfile,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = HavolineYellow),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Default.Edit, contentDescription = null, tint = ChevronBlue)
+                    Spacer(Modifier.width(8.dp))
+                    Text("EDITAR PERFIL", color = ChevronBlue, fontWeight = FontWeight.Bold)
+                }
+
+                Spacer(Modifier.height(12.dp))
+
+                // Botón Cambiar Contraseña
+                OutlinedButton(
+                    onClick = onNavigateToChangePassword,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = ChevronBlue),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Default.Lock, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("CAMBIAR CONTRASEÑA", fontWeight = FontWeight.Bold)
+                }
+
+                Spacer(Modifier.height(32.dp))
+
+                // Sección: Estadísticas (opcional)
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(2.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.Timeline,
+                                contentDescription = null,
+                                tint = HavolineYellow,
+                                modifier = Modifier.size(28.dp)
+                            )
+                            Spacer(Modifier.width(12.dp))
+                            Text(
+                                "Actividad",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                        }
+
+                        Spacer(Modifier.height(16.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            StatItem("Servicios", "0")
+                            VerticalDivider(modifier = Modifier.height(40.dp))
+                            StatItem("Puntos", "0")
+                            VerticalDivider(modifier = Modifier.height(40.dp))
+                            StatItem("Reservas", "0")
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(24.dp))
+
+                // Botón Cerrar Sesión
+                OutlinedButton(
+                    onClick = onLogout,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFB00020)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Default.ExitToApp, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("CERRAR SESIÓN", fontWeight = FontWeight.Bold)
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                // Información de cuenta
+                if (createdAt != null) {
+                    Text(
+                        text = "Miembro desde ${formatDate(createdAt)}",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                }
             }
         }
+    }
+}
+
+@Composable
+fun SectionHeader(title: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .width(4.dp)
+                .height(20.dp)
+                .background(HavolineYellow, RoundedCornerShape(2.dp))
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = title,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = ChevronBlue
+        )
     }
 }
 
@@ -143,7 +334,8 @@ fun ProfileInfoCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(2.dp)
+        elevation = CardDefaults.cardElevation(2.dp),
+        shape = RoundedCornerShape(12.dp)
     ) {
         Row(
             modifier = Modifier
@@ -151,12 +343,19 @@ fun ProfileInfoCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                icon,
-                contentDescription = null,
-                tint = HavolineYellow,
-                modifier = Modifier.size(32.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(HavolineYellow.copy(alpha = 0.2f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    tint = HavolineYellow,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
             Spacer(Modifier.width(16.dp))
             Column {
                 Text(
@@ -165,6 +364,7 @@ fun ProfileInfoCard(
                     color = Color.Gray,
                     fontWeight = FontWeight.Medium
                 )
+                Spacer(Modifier.height(4.dp))
                 Text(
                     text = value,
                     fontSize = 16.sp,
@@ -174,4 +374,33 @@ fun ProfileInfoCard(
             }
         }
     }
+}
+
+@Composable
+fun StatItem(label: String, value: String) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = value,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = ChevronBlue
+        )
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            color = Color.Gray
+        )
+    }
+}
+
+fun formatDate(timestamp: com.google.firebase.Timestamp): String {
+    val date = timestamp.toDate()
+    val calendar = java.util.Calendar.getInstance().apply { time = date }
+    val months = arrayOf(
+        "Ene", "Feb", "Mar", "Abr", "May", "Jun",
+        "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
+    )
+    return "${months[calendar.get(java.util.Calendar.MONTH)]} ${calendar.get(java.util.Calendar.YEAR)}"
 }

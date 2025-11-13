@@ -20,6 +20,7 @@ enum class Screen {
     FORGOT_PASSWORD,
     HOME,
     PROFILE,
+    EDIT_PROFILE,
     TALLER,
     ADMIN_PANEL
 }
@@ -78,7 +79,26 @@ class MainActivity : AppCompatActivity() {
                                     onEmailChange = vm::updateEmail,
                                     onPasswordChange = vm::updatePassword,
                                     onLoginClick = {
-                                        vm.signIn { uid -> repo.isAdmin(uid) }
+                                        when {
+                                            state.email.isBlank() -> {
+                                                scope.launch {
+                                                    snackBarHost.showSnackbar("Por favor ingresa tu correo")
+                                                }
+                                            }
+                                            state.password.isBlank() -> {
+                                                scope.launch {
+                                                    snackBarHost.showSnackbar("Por favor ingresa tu contraseña")
+                                                }
+                                            }
+                                            state.password.length < 6 -> {
+                                                scope.launch {
+                                                    snackBarHost.showSnackbar("La contraseña debe tener al menos 6 caracteres")
+                                                }
+                                            }
+                                            else -> {
+                                                vm.signIn { uid -> repo.isAdmin(uid) }
+                                            }
+                                        }
                                     },
                                     onForgotClick = {
                                         currentScreen = Screen.FORGOT_PASSWORD
@@ -103,11 +123,50 @@ class MainActivity : AppCompatActivity() {
                                     onConfirmPasswordChange = vm::updateConfirmPassword,
                                     onPhoneChange = vm::updatePhone,
                                     onRegisterClick = {
-                                        vm.signUp { uid ->
-                                            if (uid != null) {
+                                        when {
+                                            state.username.isBlank() -> {
                                                 scope.launch {
-                                                    snackBarHost.showSnackbar("Registro exitoso. Inicia sesión.")
-                                                    currentScreen = Screen.LOGIN
+                                                    snackBarHost.showSnackbar("Por favor ingresa un nombre de usuario")
+                                                }
+                                            }
+                                            state.email.isBlank() -> {
+                                                scope.launch {
+                                                    snackBarHost.showSnackbar("Por favor ingresa tu correo")
+                                                }
+                                            }
+                                            !android.util.Patterns.EMAIL_ADDRESS.matcher(state.email).matches() -> {
+                                                scope.launch {
+                                                    snackBarHost.showSnackbar("Por favor ingresa un correo válido")
+                                                }
+                                            }
+                                            state.password.isBlank() -> {
+                                                scope.launch {
+                                                    snackBarHost.showSnackbar("Por favor ingresa una contraseña")
+                                                }
+                                            }
+                                            state.password.length < 6 -> {
+                                                scope.launch {
+                                                    snackBarHost.showSnackbar("La contraseña debe tener al menos 6 caracteres")
+                                                }
+                                            }
+                                            state.password != state.confirmPassword -> {
+                                                scope.launch {
+                                                    snackBarHost.showSnackbar("Las contraseñas no coinciden")
+                                                }
+                                            }
+                                            state.phone.isBlank() -> {
+                                                scope.launch {
+                                                    snackBarHost.showSnackbar("Por favor ingresa un teléfono")
+                                                }
+                                            }
+                                            else -> {
+                                                vm.signUp { uid ->
+                                                    if (uid != null) {
+                                                        scope.launch {
+                                                            snackBarHost.showSnackbar("Registro exitoso. Inicia sesión.")
+                                                            currentScreen = Screen.LOGIN
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -124,10 +183,24 @@ class MainActivity : AppCompatActivity() {
                                     email = state.email,
                                     onEmailChange = vm::updateEmail,
                                     onSendCodeClick = {
-                                        vm.sendReset {
-                                            scope.launch {
-                                                snackBarHost.showSnackbar("Correo de recuperación enviado")
-                                                currentScreen = Screen.LOGIN
+                                        when {
+                                            state.email.isBlank() -> {
+                                                scope.launch {
+                                                    snackBarHost.showSnackbar("Por favor ingresa tu correo")
+                                                }
+                                            }
+                                            !android.util.Patterns.EMAIL_ADDRESS.matcher(state.email).matches() -> {
+                                                scope.launch {
+                                                    snackBarHost.showSnackbar("Por favor ingresa un correo válido")
+                                                }
+                                            }
+                                            else -> {
+                                                vm.sendReset {
+                                                    scope.launch {
+                                                        snackBarHost.showSnackbar("Correo de recuperación enviado")
+                                                        currentScreen = Screen.LOGIN
+                                                    }
+                                                }
                                             }
                                         }
                                     },
@@ -141,7 +214,6 @@ class MainActivity : AppCompatActivity() {
                             Screen.HOME -> {
                                 HomeScreen(
                                     onNavigateToDomicilio = {
-                                        // Cambiar a Fragment para el mapa
                                         supportFragmentManager.beginTransaction()
                                             .replace(
                                                 R.id.fragment_container,
@@ -173,6 +245,26 @@ class MainActivity : AppCompatActivity() {
                                         FirebaseAuth.getInstance().signOut()
                                         isAdmin = false
                                         currentScreen = Screen.LOGIN
+                                    },
+                                    onNavigateToEditProfile = {
+                                        currentScreen = Screen.EDIT_PROFILE
+                                    },
+                                    onNavigateToChangePassword = {
+                                        currentScreen = Screen.FORGOT_PASSWORD
+                                    }
+                                )
+                            }
+
+                            Screen.EDIT_PROFILE -> {
+                                EditProfileScreen(
+                                    onBackClick = {
+                                        currentScreen = Screen.PROFILE
+                                    },
+                                    onProfileUpdated = {
+                                        scope.launch {
+                                            snackBarHost.showSnackbar("Perfil actualizado exitosamente")
+                                        }
+                                        currentScreen = Screen.PROFILE
                                     }
                                 )
                             }
@@ -204,7 +296,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Manejar el botón de back
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         if (supportFragmentManager.backStackEntryCount > 0) {
