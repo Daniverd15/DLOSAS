@@ -2,7 +2,6 @@ package com.example.proyecto
 
 import TextMuted
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -159,6 +158,20 @@ fun RegisterScreen(
                         Text("REGÍSTRATE", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = ChevronRed)
                     }
                 }
+
+                // --- ACCIÓN PARA VOLVER AL LOGIN ---
+                TextButton(
+                    onClick = onBackToLoginClick,
+                    enabled = !loading,
+                    modifier = Modifier.padding(top = 8.dp)
+                ) {
+                    Text(
+                        text = "¿Ya tienes cuenta? Inicia sesión",
+                        color = ChevronBlue,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
 
             // --- FOOTER ---
@@ -191,7 +204,7 @@ fun RegisterScreen(
     }
 }
 
-// Composable de Input Personalizado para replicar el estilo de la imagen
+// Composable de Input Personalizado (CON FILTRADO DE TELÉFONO)
 @Composable
 fun AuthInputField(
     value: String,
@@ -204,7 +217,15 @@ fun AuthInputField(
 ) {
     OutlinedTextField(
         value = value,
-        onValueChange = onValueChange,
+        onValueChange = { newValue ->
+            // Si el tipo de teclado es Phone, filtramos solo para permitir dígitos.
+            if (keyboardOptions.keyboardType == KeyboardType.Phone) {
+                val filteredValue = newValue.filter { it.isDigit() }
+                onValueChange(filteredValue)
+            } else {
+                onValueChange(newValue)
+            }
+        },
         label = { Text(label, color = Color.Gray) },
         leadingIcon = leadingIcon,
         singleLine = true,

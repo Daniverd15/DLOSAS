@@ -111,6 +111,7 @@ dependencies {
     // Coil para cargar imágenes
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation(libs.firebase.firestore)
+    implementation(libs.firebase.auth)
 
     // Testing
     testImplementation("junit:junit:4.13.2")

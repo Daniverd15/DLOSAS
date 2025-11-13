@@ -18,18 +18,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     onBackClick: () -> Unit,
     onLogout: () -> Unit,
+    // Nuevos Callbacks
     onNavigateToEditProfile: () -> Unit,
     onNavigateToChangePassword: () -> Unit
 ) {
@@ -55,6 +59,7 @@ fun ProfileScreen(
         }
     }
 
+    // Usar datos de Firestore si están disponibles, sino usar datos de FirebaseAuth
     val displayName = userData?.get("username") as? String ?: currentUser?.displayName ?: "Usuario"
     val email = userData?.get("email") as? String ?: currentUser?.email ?: "correo@ejemplo.com"
     val phoneNumber = userData?.get("phone") as? String ?: "No disponible"
@@ -93,11 +98,11 @@ fun ProfileScreen(
                     .fillMaxSize()
                     .background(Cream)
                     .padding(padding)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(rememberScrollState()) // Añadido para scroll
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Avatar del usuario con badge de admin si aplica
+                // Avatar del usuario con badge de admin
                 Box(
                     modifier = Modifier.size(140.dp)
                 ) {
@@ -198,7 +203,7 @@ fun ProfileScreen(
 
                 // Botón Editar Perfil
                 Button(
-                    onClick = onNavigateToEditProfile,
+                    onClick = onNavigateToEditProfile, // Usa el nuevo callback
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
@@ -214,7 +219,7 @@ fun ProfileScreen(
 
                 // Botón Cambiar Contraseña
                 OutlinedButton(
-                    onClick = onNavigateToChangePassword,
+                    onClick = onNavigateToChangePassword, // Usa el nuevo callback
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
@@ -228,7 +233,7 @@ fun ProfileScreen(
 
                 Spacer(Modifier.height(32.dp))
 
-                // Sección: Estadísticas (opcional)
+                // Sección: Estadísticas
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -303,6 +308,8 @@ fun ProfileScreen(
     }
 }
 
+// Composables Auxiliares añadidos
+
 @Composable
 fun SectionHeader(title: String) {
     Row(
@@ -327,7 +334,7 @@ fun SectionHeader(title: String) {
 
 @Composable
 fun ProfileInfoCard(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector, // Se usó ImageVector en lugar de androidx.compose.ui.graphics.vector.ImageVector para simplificar
     label: String,
     value: String
 ) {

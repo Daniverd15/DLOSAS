@@ -36,6 +36,7 @@ class MapaFragment : Fragment(), OnMapReadyCallback {
     private lateinit var infoLayout: LinearLayout
     private lateinit var distanceText: TextView
     private lateinit var durationText: TextView
+    private var btnConfirmar: Button? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -50,6 +51,7 @@ class MapaFragment : Fragment(), OnMapReadyCallback {
 
         if (mapFragment == null) {
             Toast.makeText(requireContext(), "Error: mapa no encontrado", Toast.LENGTH_SHORT).show()
+            Log.e("MAPA_ERROR", "SupportMapFragment not found in fragment_mapa.xml")
         } else {
             com.google.android.gms.maps.MapsInitializer.initialize(requireContext())
             mapFragment.getMapAsync(this)
@@ -61,7 +63,10 @@ class MapaFragment : Fragment(), OnMapReadyCallback {
         distanceText = view.findViewById(R.id.textDistance)
         durationText = view.findViewById(R.id.textDuration)
 
-        // Acción principal
+        // ✅ Botón confirmar (si existe en tu layout)
+        btnConfirmar = view.findViewById(R.id.btnConfirmarRuta)
+
+        // Acción principal - Calcular ruta
         btnCalculate.setOnClickListener {
             if (::map.isInitialized) {
                 map.clear()
@@ -82,7 +87,7 @@ class MapaFragment : Fragment(), OnMapReadyCallback {
                                 .title("Origen")
                                 .icon(bitmapDescriptorFromVector(R.drawable.ic_start))
                         )
-                        Toast.makeText(requireContext(), "Origen seleccionado", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), "Origen seleccionado ✅", Toast.LENGTH_SHORT).show()
                     } else if (end.isEmpty()) {
                         end = "${point.longitude},${point.latitude}" // ORS usa long,lat
                         endMarker = map.addMarker(
@@ -91,12 +96,32 @@ class MapaFragment : Fragment(), OnMapReadyCallback {
                                 .title("Destino")
                                 .icon(bitmapDescriptorFromVector(R.drawable.ic_end))
                         )
-                        Toast.makeText(requireContext(), "Destino seleccionado", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), "Destino seleccionado ✅", Toast.LENGTH_SHORT).show()
                         createRoute()
                     }
                 }
             } else {
                 Toast.makeText(requireContext(), "El mapa no está listo", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // ✅ Acción del botón confirmar
+        btnConfirmar?.setOnClickListener {
+            if (start.isNotEmpty() && end.isNotEmpty()) {
+                Toast.makeText(
+                    requireContext(),
+                    "¡Ubicación confirmada! El servicio fue solicitado.",
+                    Toast.LENGTH_LONG
+                ).show()
+
+                // Volver a la pantalla anterior (HomeScreen)
+                parentFragmentManager.popBackStack()
+            } else {
+                Toast.makeText(
+                    requireContext(),
+                    "Primero calcula una ruta",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
 
@@ -108,20 +133,22 @@ class MapaFragment : Fragment(), OnMapReadyCallback {
         map.uiSettings.isZoomControlsEnabled = true
         val initialLocation = LatLng(7.119349, -73.122741) // Bucaramanga
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLocation, 13f))
+
+        Log.i("MAPA", "Google Maps ready ✅")
     }
 
     // Crear la ruta con OpenRouteService
     private fun createRoute() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val apiKey = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImJlYjdhNDg4OWViOTRhMWZiOTczZTlkM2NmODFkYmEzIiwiaCI6Im11cm11cjY0In0=" // 🔑 reemplaza con tu clave real de OpenRouteService
+                val apiKey = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImJlYjdhNDg4OWViOTRhMWZiOTczZTlkM2NmODFkYmEzIiwiaCI6Im11cm11cjY0In0="
                 val call = getRetrofit().create(ApiService::class.java)
                     .getRoute(apiKey, start, end)
 
                 if (call.isSuccessful) {
                     val routeResponse = call.body()
                     if (!routeResponse?.features.isNullOrEmpty()) {
-                        Log.i("RUTA", "Ruta ORS recibida correctamente")
+                        Log.i("RUTA", "Ruta ORS recibida correctamente ✅")
                         drawRouteORS(routeResponse)
                     } else {
                         showToast("No se encontró una ruta entre los puntos")
@@ -132,7 +159,7 @@ class MapaFragment : Fragment(), OnMapReadyCallback {
                     showToast("Error de conexión con OpenRouteService (${call.code()})")
                 }
             } catch (e: Exception) {
-                Log.e("RUTA", "Error: ${e.message}")
+                Log.e("RUTA", "Error: ${e.message}", e)
                 showToast("Error: ${e.localizedMessage}")
             }
         }
@@ -168,6 +195,8 @@ class MapaFragment : Fragment(), OnMapReadyCallback {
             distanceText.text = "Distancia: $distancia"
             durationText.text = "Duración: $duracion"
             infoLayout.visibility = View.VISIBLE
+
+            Log.i("RUTA", "Ruta dibujada: $distancia, $duracion ✅")
         }
     }
 
@@ -185,15 +214,25 @@ class MapaFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun bitmapDescriptorFromVector(vectorResId: Int): BitmapDescriptor {
-        val vectorDrawable = ContextCompat.getDrawable(requireContext(), vectorResId)
-        vectorDrawable!!.setBounds(0, 0, vectorDrawable.intrinsicWidth, vectorDrawable.intrinsicHeight)
-        val bitmap = Bitmap.createBitmap(
-            vectorDrawable.intrinsicWidth,
-            vectorDrawable.intrinsicHeight,
-            Bitmap.Config.ARGB_8888
-        )
-        val canvas = Canvas(bitmap)
-        vectorDrawable.draw(canvas)
-        return BitmapDescriptorFactory.fromBitmap(bitmap)
+        return try {
+            val vectorDrawable = ContextCompat.getDrawable(requireContext(), vectorResId)
+            if (vectorDrawable == null) {
+                Log.e("MAPA", "Vector drawable not found: $vectorResId")
+                return BitmapDescriptorFactory.defaultMarker()
+            }
+
+            vectorDrawable.setBounds(0, 0, vectorDrawable.intrinsicWidth, vectorDrawable.intrinsicHeight)
+            val bitmap = Bitmap.createBitmap(
+                vectorDrawable.intrinsicWidth,
+                vectorDrawable.intrinsicHeight,
+                Bitmap.Config.ARGB_8888
+            )
+            val canvas = Canvas(bitmap)
+            vectorDrawable.draw(canvas)
+            BitmapDescriptorFactory.fromBitmap(bitmap)
+        } catch (e: Exception) {
+            Log.e("MAPA", "Error creating bitmap from vector: ${e.message}", e)
+            BitmapDescriptorFactory.defaultMarker()
+        }
     }
 }

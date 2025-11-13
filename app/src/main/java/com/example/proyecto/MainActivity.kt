@@ -14,26 +14,43 @@ import com.example.proyecto.ui.theme.*
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
+
+// Se incluye EDIT_PROFILE
 enum class Screen {
     LOGIN,
     REGISTER,
     FORGOT_PASSWORD,
     HOME,
     PROFILE,
-    EDIT_PROFILE,
+    EDIT_PROFILE, // Nuevo estado
     TALLER,
     ADMIN_PANEL
 }
 
 class MainActivity : AppCompatActivity() {
 
+    // Se asume la existencia de estas pantallas (Compose o Fragment)
+    // Ya estaban en tu archivo original/nuevo
+    // @Composable fun LoginScreen(...)
+    // @Composable fun RegisterScreen(...)
+    // @Composable fun ForgotPasswordScreen(...)
+    // @Composable fun HomeScreen(...)
+    // @Composable fun TallerScreen(...)
+    // @Composable fun AdminPanelScreen(...)
+    // @Composable fun EditProfileScreen(...) // Necesaria para el nuevo estado
+    // class UserRepository // Necesaria para vm.signIn
+    // class DomicilioFragment // Necesaria para el FragmentManager
+    // R.id.fragment_container // Necesaria para el FragmentManager (Asume una vista host en XML)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
             AppTheme {
+                // Se asume la existencia de AuthViewModel, AuthEvent y el state
                 val vm: AuthViewModel = viewModel()
                 val state by vm.state.collectAsState()
+                // Se asume la existencia de UserRepository
                 val repo = remember { UserRepository() }
 
                 val snackBarHost = remember { SnackbarHostState() }
@@ -81,19 +98,13 @@ class MainActivity : AppCompatActivity() {
                                     onLoginClick = {
                                         when {
                                             state.email.isBlank() -> {
-                                                scope.launch {
-                                                    snackBarHost.showSnackbar("Por favor ingresa tu correo")
-                                                }
+                                                scope.launch { snackBarHost.showSnackbar("Por favor ingresa tu correo") }
                                             }
                                             state.password.isBlank() -> {
-                                                scope.launch {
-                                                    snackBarHost.showSnackbar("Por favor ingresa tu contraseña")
-                                                }
+                                                scope.launch { snackBarHost.showSnackbar("Por favor ingresa tu contraseña") }
                                             }
                                             state.password.length < 6 -> {
-                                                scope.launch {
-                                                    snackBarHost.showSnackbar("La contraseña debe tener al menos 6 caracteres")
-                                                }
+                                                scope.launch { snackBarHost.showSnackbar("La contraseña debe tener al menos 6 caracteres") }
                                             }
                                             else -> {
                                                 vm.signIn { uid -> repo.isAdmin(uid) }
@@ -125,39 +136,25 @@ class MainActivity : AppCompatActivity() {
                                     onRegisterClick = {
                                         when {
                                             state.username.isBlank() -> {
-                                                scope.launch {
-                                                    snackBarHost.showSnackbar("Por favor ingresa un nombre de usuario")
-                                                }
+                                                scope.launch { snackBarHost.showSnackbar("Por favor ingresa un nombre de usuario") }
                                             }
                                             state.email.isBlank() -> {
-                                                scope.launch {
-                                                    snackBarHost.showSnackbar("Por favor ingresa tu correo")
-                                                }
+                                                scope.launch { snackBarHost.showSnackbar("Por favor ingresa tu correo") }
                                             }
                                             !android.util.Patterns.EMAIL_ADDRESS.matcher(state.email).matches() -> {
-                                                scope.launch {
-                                                    snackBarHost.showSnackbar("Por favor ingresa un correo válido")
-                                                }
+                                                scope.launch { snackBarHost.showSnackbar("Por favor ingresa un correo válido") }
                                             }
                                             state.password.isBlank() -> {
-                                                scope.launch {
-                                                    snackBarHost.showSnackbar("Por favor ingresa una contraseña")
-                                                }
+                                                scope.launch { snackBarHost.showSnackbar("Por favor ingresa una contraseña") }
                                             }
                                             state.password.length < 6 -> {
-                                                scope.launch {
-                                                    snackBarHost.showSnackbar("La contraseña debe tener al menos 6 caracteres")
-                                                }
+                                                scope.launch { snackBarHost.showSnackbar("La contraseña debe tener al menos 6 caracteres") }
                                             }
                                             state.password != state.confirmPassword -> {
-                                                scope.launch {
-                                                    snackBarHost.showSnackbar("Las contraseñas no coinciden")
-                                                }
+                                                scope.launch { snackBarHost.showSnackbar("Las contraseñas no coinciden") }
                                             }
                                             state.phone.isBlank() -> {
-                                                scope.launch {
-                                                    snackBarHost.showSnackbar("Por favor ingresa un teléfono")
-                                                }
+                                                scope.launch { snackBarHost.showSnackbar("Por favor ingresa un teléfono") }
                                             }
                                             else -> {
                                                 vm.signUp { uid ->
@@ -185,14 +182,10 @@ class MainActivity : AppCompatActivity() {
                                     onSendCodeClick = {
                                         when {
                                             state.email.isBlank() -> {
-                                                scope.launch {
-                                                    snackBarHost.showSnackbar("Por favor ingresa tu correo")
-                                                }
+                                                scope.launch { snackBarHost.showSnackbar("Por favor ingresa tu correo") }
                                             }
                                             !android.util.Patterns.EMAIL_ADDRESS.matcher(state.email).matches() -> {
-                                                scope.launch {
-                                                    snackBarHost.showSnackbar("Por favor ingresa un correo válido")
-                                                }
+                                                scope.launch { snackBarHost.showSnackbar("Por favor ingresa un correo válido") }
                                             }
                                             else -> {
                                                 vm.sendReset {
@@ -214,10 +207,12 @@ class MainActivity : AppCompatActivity() {
                             Screen.HOME -> {
                                 HomeScreen(
                                     onNavigateToDomicilio = {
+                                        // Se usa R.id.fragment_container (asumiendo un layout XML)
                                         supportFragmentManager.beginTransaction()
                                             .replace(
-                                                R.id.fragment_container,
-                                                DomicilioFragment()
+                                                // R.id.fragment_container // <- USAR ESTO SI HAY FRAGMENT CONTAINER EN XML
+                                                android.R.id.content, // <- OPCIÓN DE BACKUP SI NO HAY FRAGMENT CONTAINER ESPECÍFICO
+                                                DomicilioFragment() // Se asume la existencia de DomicilioFragment
                                             )
                                             .addToBackStack(null)
                                             .commit()
@@ -246,6 +241,7 @@ class MainActivity : AppCompatActivity() {
                                         isAdmin = false
                                         currentScreen = Screen.LOGIN
                                     },
+                                    // Nuevas navegaciones añadidas
                                     onNavigateToEditProfile = {
                                         currentScreen = Screen.EDIT_PROFILE
                                     },
@@ -255,8 +251,9 @@ class MainActivity : AppCompatActivity() {
                                 )
                             }
 
+                            // Nuevo manejo para EDIT_PROFILE
                             Screen.EDIT_PROFILE -> {
-                                EditProfileScreen(
+                                EditProfileScreen( // Se asume la existencia de EditProfileScreen
                                     onBackClick = {
                                         currentScreen = Screen.PROFILE
                                     },

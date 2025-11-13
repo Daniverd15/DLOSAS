@@ -2,23 +2,35 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/fragment_container"
+    android:id="@+id/mapa_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F5EFE6">
 
+    <!-- Toolbar con botón volver -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="0dp"
+        android:layout_height="56dp"
+        android:background="#103A63"
+        android:elevation="4dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:navigationIcon="@drawable/ic_arrow_back"
+        app:title="Selecciona tu ubicación"
+        app:titleTextColor="#FFFFFF" />
+
     <!-- Contenedor del mapa -->
-    <fragment
+    <androidx.fragment.app.FragmentContainerView
         android:id="@+id/map_fragment"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/toolbar"
         app:layout_constraintBottom_toTopOf="@+id/cardInstructions"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        tools:context=".ui.theme.MapaFragment"/>
+        app:layout_constraintEnd_toEndOf="parent"/>
 
     <!-- Card de instrucciones -->
     <com.google.android.material.card.MaterialCardView
@@ -40,19 +52,12 @@
             android:padding="12dp"
             android:gravity="center_vertical">
 
-            <ImageView
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:src="@android:drawable/ic_dialog_info"
-                android:contentDescription="Info"
-                app:tint="#103A63" />
-
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="12dp"
-                android:text="Toca el mapa para elegir origen y destino"
+                android:text="📍 Toca el mapa para elegir origen y destino"
                 android:textSize="14sp"
                 android:textColor="#103A63"
                 android:textStyle="bold"/>
@@ -70,8 +75,6 @@
         android:textStyle="bold"
         android:backgroundTint="#F7C948"
         android:textColor="#103A63"
-        app:cornerRadius="12dp"
-        android:elevation="4dp"
         app:layout_constraintBottom_toTopOf="@+id/infoLayout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"/>
@@ -85,10 +88,10 @@
         android:background="@android:color/white"
         android:padding="16dp"
         android:visibility="gone"
+        android:elevation="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        android:elevation="8dp">
+        app:layout_constraintStart_toStartOf="parent">
 
         <TextView
             android:layout_width="wrap_content"
@@ -105,19 +108,17 @@
             android:orientation="horizontal"
             android:layout_marginBottom="8dp">
 
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@android:drawable/ic_menu_directions"
-                android:contentDescription="Distance"
-                app:tint="#F7C948" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📏 "
+                android:textSize="20sp"/>
 
             <TextView
                 android:id="@+id/textDistance"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="12dp"
                 android:text="Distancia: --"
                 android:textSize="16sp"
                 android:textColor="#1E2A36"/>
@@ -128,19 +129,17 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@android:drawable/ic_menu_recent_history"
-                android:contentDescription="Duration"
-                app:tint="#F7C948" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⏱️ "
+                android:textSize="20sp"/>
 
             <TextView
                 android:id="@+id/textDuration"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="12dp"
                 android:text="Duración: --"
                 android:textSize="16sp"
                 android:textColor="#1E2A36"/>
@@ -156,7 +155,7 @@
             android:textSize="14sp"
             android:textStyle="bold"
             android:backgroundTint="#103A63"
-            android:textColor="#FFFFFF"
-            app:cornerRadius="8dp"/>
+            android:textColor="#FFFFFF"/>
     </LinearLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
