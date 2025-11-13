@@ -1,13 +1,57 @@
 package com.example.proyecto
 
-import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
 class UserRepository(
-    private val db: FirebaseDatabase = FirebaseDatabase.getInstance()
+    private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
+    /**
+     * Verifica si un usuario es administrador consultando Firestore
+     */
     suspend fun isAdmin(uid: String): Boolean {
-        val snap = db.getReference("users").child(uid).child("role").get().await()
-        return snap.value == "admin"
+        return try {
+            val document = db.collection("users")
+                .document(uid)
+                .get()
+                .await()
+
+            // Obtener el campo isAdmin del documento
+            document.getBoolean("isAdmin") ?: false
+        } catch (e: Exception) {
+            // Si hay error (ej: usuario no existe), retornar false
+            false
+        }
+    }
+
+    /**
+     * Obtiene los datos completos del usuario desde Firestore
+     */
+    suspend fun getUserData(uid: String): Map<String, Any?>? {
+        return try {
+            val document = db.collection("users")
+                .document(uid)
+                .get()
+                .await()
+
+            document.data
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
+     * Actualiza el rol de admin de un usuario (solo para panel de admin)
+     */
+    suspend fun setAdminRole(uid: String, isAdmin: Boolean): Boolean {
+        return try {
+            db.collection("users")
+                .document(uid)
+                .update("isAdmin", isAdmin)
+                .await()
+            true
+        } catch (e: Exception) {
+            false
+        }
     }
 }

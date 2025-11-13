@@ -149,7 +149,11 @@ fun LoginScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Button(
-                            onClick = onLoginClick,
+                            onClick = {
+                                if (!loading) {
+                                    onLoginClick()
+                                }
+                            },
                             enabled = !loading,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -158,18 +162,29 @@ fun LoginScreen(
                             elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = HavolineYellow,
-                                contentColor = Color(0xFF202020)
+                                contentColor = Color(0xFF202020),
+                                disabledContainerColor = HavolineYellow.copy(alpha = 0.6f),
+                                disabledContentColor = Color(0xFF202020).copy(alpha = 0.6f)
                             )
                         ) {
-                            if (loading) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(18.dp),
-                                    color = Color(0xFF202020),
-                                    strokeWidth = 2.dp
+                            Row(
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                if (loading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(18.dp),
+                                        color = Color(0xFF202020),
+                                        strokeWidth = 2.dp
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                }
+                                Text(
+                                    if (loading) "Iniciando..." else "INICIA SESIÓN",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp
                                 )
-                                Spacer(Modifier.width(6.dp))
                             }
-                            Text("INICIA SESIÓN", fontWeight = FontWeight.Bold, fontSize = 15.sp)
                         }
                         // línea roja solo del botón
                         Box(

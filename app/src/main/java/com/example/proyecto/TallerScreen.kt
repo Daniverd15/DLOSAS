@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -245,7 +246,7 @@ fun TallerScreen(
                         )
 
                         Spacer(Modifier.height(12.dp))
-                        Divider()
+                        HorizontalDivider()
                         Spacer(Modifier.height(8.dp))
 
                         Text(
@@ -326,20 +327,20 @@ fun TallerScreen(
                     Text(
                         "¡Reserva Confirmada!",
                         fontWeight = FontWeight.Bold,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        textAlign = TextAlign.Center
                     )
                 },
                 text = {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             "Tu cita en ${selectedLubricentro!!.nombre} ha sido programada.",
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            textAlign = TextAlign.Center,
                             fontSize = 14.sp
                         )
                         Spacer(Modifier.height(12.dp))
                         Text(
                             "Recibirás un SMS de confirmación en breve.",
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            textAlign = TextAlign.Center,
                             fontSize = 12.sp,
                             color = Color.Gray
                         )
@@ -475,44 +476,73 @@ fun LubricentroCard(
             }
 
             Spacer(Modifier.height(12.dp))
-            Divider()
-            Spacer(Modifier.height(8.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(12.dp))
 
-            // Botones de acción
+            // Botones de acción mejorados
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // Botón Info
                 OutlinedButton(
                     onClick = onVerDetalles,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = ChevronBlue)
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(40.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = ChevronBlue),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
                 ) {
-                    Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("DETALLES", fontSize = 12.sp)
+                    Icon(
+                        Icons.Default.Info,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        "Info",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
 
-                Spacer(Modifier.width(8.dp))
-
+                // Botón Llamar
                 OutlinedButton(
                     onClick = onLlamar,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF4CAF50))
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(40.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF4CAF50)),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
                 ) {
-                    Icon(Icons.Default.Phone, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("LLAMAR", fontSize = 12.sp)
+                    Icon(
+                        Icons.Default.Phone,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        "Llamar",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
 
-                Spacer(Modifier.width(8.dp))
-
+                // Botón Reservar
                 Button(
                     onClick = onReservar,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = HavolineYellow)
+                    modifier = Modifier
+                        .weight(1.2f)
+                        .height(40.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = HavolineYellow),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
                 ) {
-                    Text("RESERVAR", color = ChevronBlue, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text(
+                        "Reservar",
+                        color = ChevronBlue,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp
+                    )
                 }
             }
         }
