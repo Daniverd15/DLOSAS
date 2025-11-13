@@ -2,9 +2,8 @@
 <resources>
 
     <!-- Tema usado por el Manifest -->
-    <style name="Theme.proyecto" parent="Theme.Material3.DayNight">
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@android:color/black</item>
+    <style name="Theme.proyecto" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Personaliza tus colores y estilos -->
     </style>
 
 </resources>

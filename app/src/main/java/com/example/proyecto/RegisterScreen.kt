@@ -5,8 +5,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -19,10 +21,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-// Reemplaza con el recurso de tu logo
 import com.example.proyecto.R
 
 // Colores aproximados del diseño
@@ -44,130 +44,131 @@ fun RegisterScreen(
     onConfirmPasswordChange: (String) -> Unit,
     onPhoneChange: (String) -> Unit,
     onRegisterClick: () -> Unit,
-    onBackToLoginClick: () -> Unit, // Aunque no está en la imagen, es buena práctica
+    onBackToLoginClick: () -> Unit,
     loading: Boolean
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 32.dp, vertical = 40.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
-    ) {
-        // Logo de Chevron
-        // Reemplaza R.drawable.chevron_logo con el ID de tu recurso de logo
-        Image(
-            painter = painterResource(id = R.drawable.logo_chevron),
-            contentDescription = "Chevron Logo",
-            modifier = Modifier.size(100.dp).padding(bottom = 16.dp)
-        )
-
-        Text(
-            text = "Crear cuenta",
-            color = ChevronRed,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(bottom = 24.dp)
-        )
-
-        // --- CAMPOS DE TEXTO ---
-
-        // 1. Usuario
-        AuthInputField(
-            value = username,
-            onValueChange = onUsernameChange,
-            label = "Usuario",
-            leadingIcon = { Icon(Icons.Filled.Person, contentDescription = "Usuario", tint = ChevronRed) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-            enabled = !loading
-        )
-
-        // 2. Email
-        AuthInputField(
-            value = email,
-            onValueChange = onEmailChange,
-            label = "Email",
-            leadingIcon = { Icon(Icons.Filled.Email, contentDescription = "Email", tint = ChevronRed) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            enabled = !loading
-        )
-
-        // 3. Contraseña
-        AuthInputField(
-            value = password,
-            onValueChange = onPasswordChange,
-            label = "Contraseña",
-            leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = "Contraseña", tint = ChevronRed) },
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            enabled = !loading
-        )
-
-        // 4. Confirma tu contraseña
-        AuthInputField(
-            value = confirmPassword,
-            onValueChange = onConfirmPasswordChange,
-            label = "Confirma tu contraseña",
-            leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = "Confirmar Contraseña", tint = ChevronRed) },
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            enabled = !loading
-        )
-
-        // 5. Teléfono
-        AuthInputField(
-            value = phone,
-            onValueChange = onPhoneChange,
-            label = "Telefono",
-            leadingIcon = { Icon(Icons.Filled.Phone, contentDescription = "Teléfono", tint = ChevronRed) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-            enabled = !loading
-        )
-
-        Spacer(Modifier.height(32.dp))
-
-        // --- BOTÓN REGISTRARSE ---
-        Button(
-            onClick = onRegisterClick,
-            enabled = !loading,
-            shape = RoundedCornerShape(25.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = ChevronYellow,
-                contentColor = ChevronRed // Color del texto
-            ),
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
-                .border(2.dp, ChevronRed, RoundedCornerShape(25.dp)) // Borde rojo
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (loading) {
-                CircularProgressIndicator(
-                    color = ChevronRed,
-                    modifier = Modifier.size(24.dp)
+            // Contenido principal centrado vertical y horizontalmente
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(horizontal = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                // Logo de Chevron
+                Image(
+                    painter = painterResource(id = R.drawable.logo_chevron),
+                    contentDescription = "Chevron Logo",
+                    modifier = Modifier
+                        .size(90.dp)
+                        .padding(bottom = 8.dp)
                 )
-            } else {
-                Text("REGÍSTRATE", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = ChevronRed)
+
+                Text(
+                    text = "Crear cuenta",
+                    color = ChevronRed,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(bottom = 20.dp)
+                )
+
+                // --- CAMPOS DE TEXTO ---
+
+                // 1. Usuario
+                AuthInputField(
+                    value = username,
+                    onValueChange = onUsernameChange,
+                    label = "Usuario",
+                    leadingIcon = { Icon(Icons.Filled.Person, contentDescription = "Usuario", tint = ChevronRed) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                    enabled = !loading
+                )
+
+                // 2. Email
+                AuthInputField(
+                    value = email,
+                    onValueChange = onEmailChange,
+                    label = "Email",
+                    leadingIcon = { Icon(Icons.Filled.Email, contentDescription = "Email", tint = ChevronRed) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    enabled = !loading
+                )
+
+                // 3. Contraseña
+                AuthInputField(
+                    value = password,
+                    onValueChange = onPasswordChange,
+                    label = "Contraseña",
+                    leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = "Contraseña", tint = ChevronRed) },
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    enabled = !loading
+                )
+
+                // 4. Confirma tu contraseña
+                AuthInputField(
+                    value = confirmPassword,
+                    onValueChange = onConfirmPasswordChange,
+                    label = "Confirma tu contraseña",
+                    leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = "Confirmar Contraseña", tint = ChevronRed) },
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    enabled = !loading
+                )
+
+                // 5. Teléfono
+                AuthInputField(
+                    value = phone,
+                    onValueChange = onPhoneChange,
+                    label = "Teléfono",
+                    leadingIcon = { Icon(Icons.Filled.Phone, contentDescription = "Teléfono", tint = ChevronRed) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    enabled = !loading
+                )
+
+                Spacer(Modifier.height(24.dp))
+
+                // --- BOTÓN REGISTRARSE ---
+                Button(
+                    onClick = onRegisterClick,
+                    enabled = !loading,
+                    shape = RoundedCornerShape(25.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ChevronYellow,
+                        contentColor = ChevronRed
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                        .border(2.dp, ChevronRed, RoundedCornerShape(25.dp))
+                ) {
+                    if (loading) {
+                        CircularProgressIndicator(
+                            color = ChevronRed,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    } else {
+                        Text("REGÍSTRATE", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = ChevronRed)
+                    }
+                }
             }
-        }
 
-        Spacer(Modifier.height(16.dp))
-
-        // Pie de página (Opcional, basado en la imagen)
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            /* ---------- FOOTER ---------- */
+            // --- FOOTER ---
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(0.20f)
-                    .padding(bottom = 14.dp),
-                verticalAlignment = Alignment.Bottom,
+                    .padding(horizontal = 24.dp, vertical = 20.dp),
+                verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Spacer(Modifier.width(2.dp))
                 runCatching {
                     Image(
                         painter = painterResource(id = R.drawable.logo_losas),
@@ -220,6 +221,6 @@ fun AuthInputField(
         shape = RoundedCornerShape(25.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(vertical = 6.dp)
     )
 }
