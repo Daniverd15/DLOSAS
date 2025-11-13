@@ -61,8 +61,8 @@
                         android:layout_width="48dp"
                         android:layout_height="48dp"
                         android:src="@android:drawable/ic_dialog_info"
-                        android:tint="#103A63"
-                        android:contentDescription="Info"/>
+                        android:contentDescription="Info"
+                        app:tint="#103A63" />
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -214,8 +214,8 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@android:drawable/checkbox_on_background"
-                        android:tint="#4CAF50"
-                        android:contentDescription="Check"/>
+                        android:contentDescription="Check"
+                        app:tint="#4CAF50" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -237,8 +237,8 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@android:drawable/checkbox_on_background"
-                        android:tint="#4CAF50"
-                        android:contentDescription="Check"/>
+                        android:contentDescription="Check"
+                        app:tint="#4CAF50" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -282,8 +282,8 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@android:drawable/checkbox_on_background"
-                        android:tint="#4CAF50"
-                        android:contentDescription="Check"/>
+                        android:contentDescription="Check"
+                        app:tint="#4CAF50" />
 
                     <TextView
                         android:layout_width="wrap_content"
