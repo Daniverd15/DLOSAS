@@ -44,7 +44,6 @@ enum class EstadoSolicitud {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminPanelScreen(
-    onBackClick: () -> Unit,
     onLogout: () -> Unit
 ) {
     // Solicitudes de ejemplo
@@ -102,14 +101,9 @@ fun AdminPanelScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Panel de Administrador", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver", tint = Color.White)
-                    }
-                },
                 actions = {
                     IconButton(onClick = onLogout) {
-                        Icon(Icons.Default.ExitToApp, contentDescription = "Salir", tint = Color.White)
+                        Icon(Icons.Default.ExitToApp, contentDescription = "Cerrar Sesión", tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

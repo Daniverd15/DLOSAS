@@ -276,9 +276,6 @@ class MainActivity : AppCompatActivity() {
 
                             Screen.ADMIN_PANEL -> {
                                 AdminPanelScreen(
-                                    onBackClick = {
-                                        currentScreen = Screen.HOME
-                                    },
                                     onLogout = {
                                         FirebaseAuth.getInstance().signOut()
                                         isAdmin = false

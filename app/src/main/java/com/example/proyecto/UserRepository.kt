@@ -1,57 +1,87 @@
 package com.example.proyecto
 
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
 class UserRepository(
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
+
     /**
-     * Verifica si un usuario es administrador consultando Firestore
+     * Verifica si un usuario es administrador
+     * Método 1: Por email específico
+     * Método 2: Por campo isAdmin en Firestore
      */
     suspend fun isAdmin(uid: String): Boolean {
         return try {
+            // Primero verificar si es el email de admin específico
+            val currentUser = auth.currentUser
+            if (currentUser?.email == "admin@admin.com") {
+                return true
+            }
+
+            // Si no es el email específico, verificar en Firestore
             val document = db.collection("users")
                 .document(uid)
                 .get()
                 .await()
 
-            // Obtener el campo isAdmin del documento
             document.getBoolean("isAdmin") ?: false
         } catch (e: Exception) {
-            // Si hay error (ej: usuario no existe), retornar false
-            false
+            // En caso de error, verificar solo por email
+            auth.currentUser?.email == "admin@admin.com"
         }
     }
 
     /**
-     * Obtiene los datos completos del usuario desde Firestore
+     * Obtiene los datos del usuario actual desde Firestore
      */
-    suspend fun getUserData(uid: String): Map<String, Any?>? {
+    suspend fun getCurrentUserData(): User? {
         return try {
+            val uid = auth.currentUser?.uid ?: return null
             val document = db.collection("users")
                 .document(uid)
                 .get()
                 .await()
 
-            document.data
+            document.toObject(User::class.java)
         } catch (e: Exception) {
             null
         }
     }
 
     /**
-     * Actualiza el rol de admin de un usuario (solo para panel de admin)
+     * Actualiza los datos del usuario en Firestore
      */
-    suspend fun setAdminRole(uid: String, isAdmin: Boolean): Boolean {
+    suspend fun updateUserData(username: String, phone: String): Boolean {
         return try {
+            val uid = auth.currentUser?.uid ?: return false
+
+            val updates = hashMapOf<String, Any>(
+                "username" to username,
+                "phone" to phone
+            )
+
             db.collection("users")
                 .document(uid)
-                .update("isAdmin", isAdmin)
+                .update(updates)
                 .await()
+
             true
         } catch (e: Exception) {
             false
         }
     }
 }
+
+// Modelo de datos de usuario (debe coincidir con el de AuthViewModel)
+data class User(
+    val uid: String = "",
+    val username: String = "",
+    val email: String = "",
+    val phone: String = "",
+    val isAdmin: Boolean = false,
+    val createdAt: Any? = null
+)
