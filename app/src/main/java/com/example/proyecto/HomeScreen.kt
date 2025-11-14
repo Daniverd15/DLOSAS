@@ -6,7 +6,6 @@ import ChevronBlue
 import TextPrimary
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -27,6 +26,7 @@ fun HomeScreen(
     onNavigateToDomicilio: () -> Unit,
     onNavigateToTaller: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    onNavigateToHistorial: () -> Unit,
     onLogout: () -> Unit
 ) {
     Scaffold(
@@ -38,6 +38,9 @@ fun HomeScreen(
                     titleContentColor = Color.White
                 ),
                 actions = {
+                    IconButton(onClick = onNavigateToHistorial) {
+                        Icon(Icons.Default.History, contentDescription = "Historial", tint = Color.White)
+                    }
                     IconButton(onClick = onNavigateToProfile) {
                         Icon(Icons.Default.Person, contentDescription = "Perfil", tint = Color.White)
                     }
