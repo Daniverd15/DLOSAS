@@ -27,6 +27,7 @@ fun HomeScreen(
     onNavigateToTaller: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onNavigateToHistorial: () -> Unit,
+    onNavigateToVehiculos: () -> Unit = {},  // ✅ NUEVO PARÁMETRO
     onLogout: () -> Unit
 ) {
     Scaffold(
@@ -129,6 +130,22 @@ fun HomeScreen(
                 Icon(Icons.Default.Build, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
                 Text("IR AL TALLER", fontWeight = FontWeight.Bold)
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // ✅ NUEVO BOTÓN: MIS VEHÍCULOS
+            OutlinedButton(
+                onClick = onNavigateToVehiculos,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = ChevronBlue),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(Icons.Default.DirectionsCar, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("MIS VEHÍCULOS", fontWeight = FontWeight.Bold)
             }
         }
     }

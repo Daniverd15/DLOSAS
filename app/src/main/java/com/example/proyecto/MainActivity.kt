@@ -23,7 +23,10 @@ enum class Screen {
     EDIT_PROFILE,
     TALLER,
     ADMIN_PANEL,
-    HISTORIAL
+    HISTORIAL,
+    VEHICULOS,           // ✅ NUEVO
+    AGREGAR_VEHICULO,    // ✅ NUEVO
+    DETALLE_VEHICULO     // ✅ NUEVO
 }
 
 class MainActivity : AppCompatActivity() {
@@ -42,6 +45,9 @@ class MainActivity : AppCompatActivity() {
 
                 var currentScreen by remember { mutableStateOf(Screen.LOGIN) }
                 var isAdmin by remember { mutableStateOf(false) }
+
+                // ✅ Variable para almacenar el vehículo seleccionado
+                var selectedVehiculo by remember { mutableStateOf<Vehiculo?>(null) }
 
                 // Manejo de eventos
                 LaunchedEffect(Unit) {
@@ -208,6 +214,9 @@ class MainActivity : AppCompatActivity() {
                                     onNavigateToHistorial = {
                                         currentScreen = Screen.HISTORIAL
                                     },
+                                    onNavigateToVehiculos = {  // ✅ NUEVO
+                                        currentScreen = Screen.VEHICULOS
+                                    },
                                     onLogout = {
                                         FirebaseAuth.getInstance().signOut()
                                         isAdmin = false
@@ -273,6 +282,53 @@ class MainActivity : AppCompatActivity() {
                                         currentScreen = Screen.HOME
                                     }
                                 )
+                            }
+
+                            // ✅ PANTALLAS NUEVAS DE VEHÍCULOS
+                            Screen.VEHICULOS -> {
+                                VehiculosScreen(
+                                    onBackClick = {
+                                        currentScreen = Screen.HOME
+                                    },
+                                    onNavigateToAgregarVehiculo = {
+                                        currentScreen = Screen.AGREGAR_VEHICULO
+                                    },
+                                    onVehiculoClick = { vehiculo ->
+                                        selectedVehiculo = vehiculo
+                                        currentScreen = Screen.DETALLE_VEHICULO
+                                    }
+                                )
+                            }
+
+                            Screen.AGREGAR_VEHICULO -> {
+                                AgregarVehiculoScreen(
+                                    onBackClick = {
+                                        currentScreen = Screen.VEHICULOS
+                                    },
+                                    onVehiculoGuardado = {
+                                        scope.launch {
+                                            snackBarHost.showSnackbar("Vehículo guardado exitosamente")
+                                        }
+                                        currentScreen = Screen.VEHICULOS
+                                    }
+                                )
+                            }
+
+                            Screen.DETALLE_VEHICULO -> {
+                                selectedVehiculo?.let { vehiculo ->
+                                    DetalleVehiculoScreen(
+                                        vehiculo = vehiculo,
+                                        onBackClick = {
+                                            currentScreen = Screen.VEHICULOS
+                                        },
+                                        onEditClick = {
+                                            // TODO: Implementar edición
+                                            scope.launch {
+                                                snackBarHost.showSnackbar("Función de edición próximamente")
+                                            }
+                                        }
+                                    )
+                                }
                             }
                         }
                     }

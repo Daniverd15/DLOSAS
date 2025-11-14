@@ -76,6 +76,53 @@
                     android:lineSpacingExtra="4dp"/>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- NUEVO: Sección de selección de vehículo -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="3dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🚗 Selecciona tu vehículo"
+                        android:textSize="16sp"
+                        android:textColor="#103A63"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="12dp"/>
+
+                    <TextView
+                        android:id="@+id/tvVehiculoSeleccionado"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Ningún vehículo seleccionado"
+                        android:textSize="14sp"
+                        android:textColor="#475569"
+                        android:padding="12dp"
+                        android:background="@drawable/rounded_border"
+                        android:layout_marginBottom="12dp"/>
+
+                    <Button
+                        android:id="@+id/btnSeleccionarVehiculo"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:text="SELECCIONAR VEHÍCULO"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:backgroundTint="#103A63"
+                        android:textColor="#FFFFFF"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- Formulario -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
