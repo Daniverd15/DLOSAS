@@ -33,7 +33,6 @@ import java.util.Locale
 fun ProfileScreen(
     onBackClick: () -> Unit,
     onLogout: () -> Unit,
-    // Nuevos Callbacks
     onNavigateToEditProfile: () -> Unit,
     onNavigateToChangePassword: () -> Unit
 ) {
@@ -44,16 +43,63 @@ fun ProfileScreen(
     var userData by remember { mutableStateOf<Map<String, Any>?>(null) }
     var loading by remember { mutableStateOf(true) }
 
+    // Estados para las estadísticas
+    var totalServicios by remember { mutableStateOf(0) }
+    var totalReservas by remember { mutableStateOf(0) }
+    var puntosAcumulados by remember { mutableStateOf(0) }
+
     // Cargar datos de Firestore
     LaunchedEffect(Unit) {
         try {
             val uid = currentUser?.uid
             if (uid != null) {
+                // Cargar datos del usuario
                 val document = db.collection("users").document(uid).get().await()
                 userData = document.data
+
+                // Cargar estadísticas de actividad
+                // 1. Contar reservas de taller
+                val reservasSnapshot = db.collection("reservas")
+                    .whereEqualTo("userId", uid)
+                    .get()
+                    .await()
+                val cantidadReservas = reservasSnapshot.size()
+
+                // 2. Contar solicitudes de domicilio
+                val solicitudesSnapshot = db.collection("solicitudes_domicilio")
+                    .whereEqualTo("userId", uid)
+                    .get()
+                    .await()
+                val cantidadSolicitudes = solicitudesSnapshot.size()
+
+                // 3. Contar servicios de colección genérica (si existe)
+                var cantidadServicios = 0
+                try {
+                    val serviciosSnapshot = db.collection("servicios")
+                        .whereEqualTo("userId", uid)
+                        .get()
+                        .await()
+                    cantidadServicios = serviciosSnapshot.size()
+                } catch (e: Exception) {
+                    // Colección no existe o error
+                }
+
+                // Calcular totales
+                totalReservas = cantidadReservas
+                totalServicios = cantidadReservas + cantidadSolicitudes + cantidadServicios
+
+                // Calcular puntos (10 puntos por cada servicio completado)
+                val completados = reservasSnapshot.documents.count {
+                    it.getString("estado") == "COMPLETADO"
+                } + solicitudesSnapshot.documents.count {
+                    it.getString("estado") == "COMPLETADO"
+                }
+                puntosAcumulados = completados * 10
+
+                android.util.Log.d("PROFILE_STATS", "Reservas: $cantidadReservas, Solicitudes: $cantidadSolicitudes, Total: $totalServicios, Puntos: $puntosAcumulados")
             }
         } catch (e: Exception) {
-            // Manejar error silenciosamente
+            android.util.Log.e("PROFILE_ERROR", "Error al cargar datos: ${e.message}")
         } finally {
             loading = false
         }
@@ -98,7 +144,7 @@ fun ProfileScreen(
                     .fillMaxSize()
                     .background(Cream)
                     .padding(padding)
-                    .verticalScroll(rememberScrollState()) // Añadido para scroll
+                    .verticalScroll(rememberScrollState())
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -203,7 +249,7 @@ fun ProfileScreen(
 
                 // Botón Editar Perfil
                 Button(
-                    onClick = onNavigateToEditProfile, // Usa el nuevo callback
+                    onClick = onNavigateToEditProfile,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
@@ -219,7 +265,7 @@ fun ProfileScreen(
 
                 // Botón Cambiar Contraseña
                 OutlinedButton(
-                    onClick = onNavigateToChangePassword, // Usa el nuevo callback
+                    onClick = onNavigateToChangePassword,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
@@ -233,7 +279,7 @@ fun ProfileScreen(
 
                 Spacer(Modifier.height(32.dp))
 
-                // Sección: Estadísticas
+                // Sección: Estadísticas (AHORA CON DATOS REALES)
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -268,11 +314,11 @@ fun ProfileScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            StatItem("Servicios", "0")
+                            StatItem("Servicios", totalServicios.toString())
                             VerticalDivider(modifier = Modifier.height(40.dp))
-                            StatItem("Puntos", "0")
+                            StatItem("Puntos", puntosAcumulados.toString())
                             VerticalDivider(modifier = Modifier.height(40.dp))
-                            StatItem("Reservas", "0")
+                            StatItem("Reservas", totalReservas.toString())
                         }
                     }
                 }
@@ -308,8 +354,6 @@ fun ProfileScreen(
     }
 }
 
-// Composables Auxiliares añadidos
-
 @Composable
 fun SectionHeader(title: String) {
     Row(
@@ -334,7 +378,7 @@ fun SectionHeader(title: String) {
 
 @Composable
 fun ProfileInfoCard(
-    icon: ImageVector, // Se usó ImageVector en lugar de androidx.compose.ui.graphics.vector.ImageVector para simplificar
+    icon: ImageVector,
     label: String,
     value: String
 ) {
