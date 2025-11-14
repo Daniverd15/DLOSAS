@@ -1,6 +1,8 @@
 package com.example.proyecto
 
+import android.R
 import android.os.Bundle
+import android.util.Patterns
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.*
@@ -24,9 +26,9 @@ enum class Screen {
     TALLER,
     ADMIN_PANEL,
     HISTORIAL,
-    VEHICULOS,           // ✅ NUEVO
-    AGREGAR_VEHICULO,    // ✅ NUEVO
-    DETALLE_VEHICULO     // ✅ NUEVO
+    VEHICULOS,
+    AGREGAR_VEHICULO,
+    DETALLE_VEHICULO
 }
 
 class MainActivity : AppCompatActivity() {
@@ -46,7 +48,7 @@ class MainActivity : AppCompatActivity() {
                 var currentScreen by remember { mutableStateOf(Screen.LOGIN) }
                 var isAdmin by remember { mutableStateOf(false) }
 
-                // ✅ Variable para almacenar el vehículo seleccionado
+                // Variable para almacenar el vehículo seleccionado
                 var selectedVehiculo by remember { mutableStateOf<Vehiculo?>(null) }
 
                 // Manejo de eventos
@@ -90,12 +92,15 @@ class MainActivity : AppCompatActivity() {
                                             state.email.isBlank() -> {
                                                 scope.launch { snackBarHost.showSnackbar("Por favor ingresa tu correo") }
                                             }
+
                                             state.password.isBlank() -> {
                                                 scope.launch { snackBarHost.showSnackbar("Por favor ingresa tu contraseña") }
                                             }
+
                                             state.password.length < 6 -> {
                                                 scope.launch { snackBarHost.showSnackbar("La contraseña debe tener al menos 6 caracteres") }
                                             }
+
                                             else -> {
                                                 vm.signIn { uid -> repo.isAdmin(uid) }
                                             }
@@ -107,7 +112,11 @@ class MainActivity : AppCompatActivity() {
                                     onRegisterClick = {
                                         currentScreen = Screen.REGISTER
                                     },
-                                    loading = state.loading
+                                    loading = state.loading,
+                                    banPopup = state.error == "USUARIO BANEADO",
+                                    onDismissBan = {
+                                        vm.clearError() // Esto limpia el error y cierra el popup
+                                    }
                                 )
                             }
 
@@ -131,7 +140,7 @@ class MainActivity : AppCompatActivity() {
                                             state.email.isBlank() -> {
                                                 scope.launch { snackBarHost.showSnackbar("Por favor ingresa tu correo") }
                                             }
-                                            !android.util.Patterns.EMAIL_ADDRESS.matcher(state.email).matches() -> {
+                                            !Patterns.EMAIL_ADDRESS.matcher(state.email).matches() -> {
                                                 scope.launch { snackBarHost.showSnackbar("Por favor ingresa un correo válido") }
                                             }
                                             state.password.isBlank() -> {
@@ -174,7 +183,7 @@ class MainActivity : AppCompatActivity() {
                                             state.email.isBlank() -> {
                                                 scope.launch { snackBarHost.showSnackbar("Por favor ingresa tu correo") }
                                             }
-                                            !android.util.Patterns.EMAIL_ADDRESS.matcher(state.email).matches() -> {
+                                            !Patterns.EMAIL_ADDRESS.matcher(state.email).matches() -> {
                                                 scope.launch { snackBarHost.showSnackbar("Por favor ingresa un correo válido") }
                                             }
                                             else -> {
@@ -199,7 +208,7 @@ class MainActivity : AppCompatActivity() {
                                     onNavigateToDomicilio = {
                                         supportFragmentManager.beginTransaction()
                                             .replace(
-                                                android.R.id.content,
+                                                R.id.content,
                                                 DomicilioFragment()
                                             )
                                             .addToBackStack(null)
@@ -214,7 +223,7 @@ class MainActivity : AppCompatActivity() {
                                     onNavigateToHistorial = {
                                         currentScreen = Screen.HISTORIAL
                                     },
-                                    onNavigateToVehiculos = {  // ✅ NUEVO
+                                    onNavigateToVehiculos = {  //  NUEVO
                                         currentScreen = Screen.VEHICULOS
                                     },
                                     onLogout = {
@@ -284,7 +293,7 @@ class MainActivity : AppCompatActivity() {
                                 )
                             }
 
-                            // ✅ PANTALLAS NUEVAS DE VEHÍCULOS
+                            // PANTALLAS NUEVAS DE VEHÍCULOS
                             Screen.VEHICULOS -> {
                                 VehiculosScreen(
                                     onBackClick = {

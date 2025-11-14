@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
@@ -43,8 +44,39 @@ fun LoginScreen(
     onLoginClick: () -> Unit,
     onForgotClick: () -> Unit,
     onRegisterClick: () -> Unit,
-    loading: Boolean
+    loading: Boolean,
+    banPopup: Boolean,
+    onDismissBan: () -> Unit
 ) {
+    if (banPopup) {
+    AlertDialog(
+        onDismissRequest = {},
+        confirmButton = {
+            Button(
+                onClick = { onDismissBan() },
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+            ) {
+                Text("CERRAR", color = Color.White, fontSize = 18.sp)
+            }
+        },
+        title = {
+            Text(
+                "🚫 ESTÁS BANEADO",
+                color = Color.Red,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Text(
+                "No puedes usar la aplicación.",
+                color = Color.DarkGray,
+                fontSize = 20.sp
+            )
+        },
+        containerColor = Color.White
+    )
+}
     Surface(modifier = Modifier.fillMaxSize(), color = Cream) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
@@ -64,6 +96,7 @@ fun LoginScreen(
                 ) {
                     /* ---------- HEADER (logo) ---------- */
                     Box(
+
                         modifier = Modifier
                             .size(120.dp)
                             .background(Color.White, RoundedCornerShape(16.dp)),
@@ -102,14 +135,14 @@ fun LoginScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(
-                            Icons.Default.Person, contentDescription = null,
+                            Icons.Default.Email, contentDescription = null,
                             tint = Color(0xFF8A0E0E), modifier = Modifier.size(26.dp)
                         )
                         Spacer(Modifier.width(10.dp))
                         YellowPillField(
                             value = email,
                             onValueChange = onEmailChange,
-                            placeholder = "Usuario",
+                            placeholder = "Email",
                             isPassword = false,
                             height = 46.dp,
                             stroke = 3.dp
