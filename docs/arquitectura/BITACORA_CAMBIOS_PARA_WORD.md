@@ -53,6 +53,24 @@
 
 - `5abffe1` - *Document architectural evolution and final C4 model.*
 
+## Cambio 3 - Bitacora lista para Word
+
+### Que se cambio
+
+- Se agrego el archivo `docs/arquitectura/BITACORA_CAMBIOS_PARA_WORD.md` con formato de bitacora academica.
+
+### Por que se cambio
+
+- Se necesitaba un documento directo para explicar "que se cambio" y "por que se cambio" de forma clara y evaluable.
+
+### Beneficio obtenido
+
+- Facilita la documentacion final en Word y mejora la trazabilidad de la evolucion tecnica.
+
+### Evidencia (commit)
+
+- `a114a94` - *Add word-ready architecture change log document.*
+
 ## Resumen comparativo (antes vs despues)
 
 - **Antes:** `AuthViewModel` mezclaba estado UI, reglas y acceso directo a Firebase.
