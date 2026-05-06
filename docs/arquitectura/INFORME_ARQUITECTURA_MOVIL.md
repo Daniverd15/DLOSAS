@@ -34,6 +34,7 @@ Se retoma la aplicacion movil Android del curso de aplicaciones moviles, ubicada
 - `AuthViewModel` queda enfocado en estado de UI y orquestacion de casos de uso.
 - Se aplica **inyeccion de dependencias por constructor** (`AuthRepository` en `AuthViewModel`).
 - Se refuerza la **separacion de responsabilidades**: UI -> ViewModel -> Repository -> Firebase.
+- Se extiende el mismo enfoque para modulos de sesion, perfil, vehiculos e historial mediante repositorios dedicados.
 
 ## 5) Enfoques aplicados
 
@@ -57,3 +58,16 @@ Se retoma la aplicacion movil Android del curso de aplicaciones moviles, ubicada
 - `app/src/main/java/com/example/proyecto/MainActivity.kt`
 - `app/src/main/java/com/example/proyecto/data/auth/AuthRepository.kt`
 - `app/src/main/java/com/example/proyecto/data/auth/FirebaseAuthRepository.kt`
+- `app/src/main/java/com/example/proyecto/data/session/SessionRepository.kt`
+- `app/src/main/java/com/example/proyecto/data/session/FirebaseSessionRepository.kt`
+- `app/src/main/java/com/example/proyecto/data/profile/ProfileRepository.kt`
+- `app/src/main/java/com/example/proyecto/data/profile/FirebaseProfileRepository.kt`
+- `app/src/main/java/com/example/proyecto/data/vehicle/VehicleRepository.kt`
+- `app/src/main/java/com/example/proyecto/data/vehicle/FirebaseVehicleRepository.kt`
+- `app/src/main/java/com/example/proyecto/data/history/HistoryRepository.kt`
+- `app/src/main/java/com/example/proyecto/data/history/FirebaseHistoryRepository.kt`
+- `app/src/main/java/com/example/proyecto/ProfileScreen.kt`
+- `app/src/main/java/com/example/proyecto/EditProfileScreen.kt`
+- `app/src/main/java/com/example/proyecto/VehiculosScreen.kt`
+- `app/src/main/java/com/example/proyecto/AgregarVehiculoScreen.kt`
+- `app/src/main/java/com/example/proyecto/HistorialScreen.kt`

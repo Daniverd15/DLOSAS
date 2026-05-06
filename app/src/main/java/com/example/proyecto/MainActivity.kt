@@ -12,8 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.proyecto.auth.AuthEvent
 import com.example.proyecto.auth.AuthViewModel
+import com.example.proyecto.data.session.FirebaseSessionRepository
 import com.example.proyecto.ui.theme.*
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 enum class Screen {
@@ -40,6 +40,7 @@ class MainActivity : AppCompatActivity() {
             AppTheme {
                 val vm: AuthViewModel = viewModel()
                 val state by vm.state.collectAsState()
+                val sessionRepository = remember { FirebaseSessionRepository() }
 
                 val snackBarHost = remember { SnackbarHostState() }
                 val scope = rememberCoroutineScope()
@@ -226,7 +227,7 @@ class MainActivity : AppCompatActivity() {
                                         currentScreen = Screen.VEHICULOS
                                     },
                                     onLogout = {
-                                        FirebaseAuth.getInstance().signOut()
+                                        sessionRepository.signOut()
                                         isAdmin = false
                                         currentScreen = Screen.LOGIN
                                     }
@@ -239,7 +240,7 @@ class MainActivity : AppCompatActivity() {
                                         currentScreen = if (isAdmin) Screen.ADMIN_PANEL else Screen.HOME
                                     },
                                     onLogout = {
-                                        FirebaseAuth.getInstance().signOut()
+                                        sessionRepository.signOut()
                                         isAdmin = false
                                         currentScreen = Screen.LOGIN
                                     },
@@ -277,7 +278,7 @@ class MainActivity : AppCompatActivity() {
                             Screen.ADMIN_PANEL -> {
                                 AdminPanelScreen(
                                     onLogout = {
-                                        FirebaseAuth.getInstance().signOut()
+                                        sessionRepository.signOut()
                                         isAdmin = false
                                         currentScreen = Screen.LOGIN
                                     }

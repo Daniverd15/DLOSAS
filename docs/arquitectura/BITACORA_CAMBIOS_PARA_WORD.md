@@ -71,6 +71,42 @@
 
 - `a114a94` - *Add word-ready architecture change log document.*
 
+## Cambio 4 - Desacople adicional de UI hacia repositorios
+
+### Que se cambio
+
+- Se agrego repositorio de sesion:
+  - `app/src/main/java/com/example/proyecto/data/session/SessionRepository.kt`
+  - `app/src/main/java/com/example/proyecto/data/session/FirebaseSessionRepository.kt`
+- Se elimino `FirebaseAuth.getInstance().signOut()` directo desde `MainActivity`.
+- Se agrego repositorio de perfil:
+  - `app/src/main/java/com/example/proyecto/data/profile/ProfileRepository.kt`
+  - `app/src/main/java/com/example/proyecto/data/profile/FirebaseProfileRepository.kt`
+- `ProfileScreen` y `EditProfileScreen` ahora consumen repositorio de perfil.
+- Se agrego repositorio de vehiculos:
+  - `app/src/main/java/com/example/proyecto/data/vehicle/VehicleRepository.kt`
+  - `app/src/main/java/com/example/proyecto/data/vehicle/FirebaseVehicleRepository.kt`
+- `VehiculosScreen` y `AgregarVehiculoScreen` ahora consumen repositorio de vehiculos.
+- Se agrego repositorio de historial:
+  - `app/src/main/java/com/example/proyecto/data/history/HistoryRepository.kt`
+  - `app/src/main/java/com/example/proyecto/data/history/FirebaseHistoryRepository.kt`
+- `HistorialScreen` ahora consume repositorio de historial.
+
+### Por que se cambio
+
+- Se priorizo que la capa UI no dependa directamente de Firebase en los modulos funcionales principales.
+- Se busco reducir acoplamiento sin cambiar la experiencia actual del usuario.
+
+### Beneficio obtenido
+
+- Mejor separacion de responsabilidades.
+- Menor impacto de cambios de infraestructura en la capa de presentacion.
+- Avance progresivo hacia una arquitectura mas limpia manteniendo compatibilidad funcional.
+
+### Verificacion de estabilidad
+
+- Se ejecuto `:app:assembleDebug` despues de cada fase de refactor y la compilacion resulto exitosa.
+
 ## Resumen comparativo (antes vs despues)
 
 - **Antes:** `AuthViewModel` mezclaba estado UI, reglas y acceso directo a Firebase.

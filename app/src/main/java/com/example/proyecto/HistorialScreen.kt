@@ -19,11 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
+import com.example.proyecto.data.history.FirebaseHistoryRepository
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -43,9 +39,7 @@ data class HistorialItem(
 fun HistorialScreen(
     onBackClick: () -> Unit
 ) {
-    val auth = FirebaseAuth.getInstance()
-    val db = FirebaseFirestore.getInstance()
-    val scope = rememberCoroutineScope()
+    val historyRepository = remember { FirebaseHistoryRepository() }
 
     var historial by remember { mutableStateOf<List<HistorialItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
@@ -58,151 +52,9 @@ fun HistorialScreen(
         isLoading = true
         errorMessage = null
         try {
-            val currentUser = auth.currentUser
-            if (currentUser != null) {
-                val items = mutableListOf<HistorialItem>()
-
-                android.util.Log.d("HISTORIAL", "Cargando historial para usuario: ${currentUser.uid}")
-
-                // 1. Cargar reservas de taller
-                try {
-                    val reservas = db.collection("reservas")
-                        .whereEqualTo("userId", currentUser.uid)
-                        .get()
-                        .await()
-
-                    android.util.Log.d("HISTORIAL", "Reservas encontradas: ${reservas.size()}")
-
-                    reservas.documents.forEach { doc ->
-                        try {
-                            val data = doc.data
-                            android.util.Log.d("HISTORIAL", "Reserva ID: ${doc.id}, Data: $data")
-
-                            val fecha = doc.getTimestamp("fechaReserva")?.toDate()
-                                ?: doc.getTimestamp("fecha")?.toDate()
-                                ?: doc.getTimestamp("timestamp")?.toDate()
-                                ?: Date()
-
-                            items.add(
-                                HistorialItem(
-                                    id = doc.id,
-                                    tipo = "Taller",
-                                    nombre = doc.getString("lubricentroNombre")
-                                        ?: doc.getString("nombreLubricentro")
-                                        ?: doc.getString("taller")
-                                        ?: "Servicio de Taller",
-                                    direccion = doc.getString("lubricentroDireccion")
-                                        ?: doc.getString("direccion")
-                                        ?: "Sin dirección",
-                                    estado = doc.getString("estado") ?: "PENDIENTE",
-                                    fecha = fecha,
-                                    precio = (doc.getLong("precio") ?: doc.getLong("costo") ?: 0L).toInt(),
-                                    notas = doc.getString("notas")
-                                        ?: doc.getString("observaciones")
-                                        ?: ""
-                                )
-                            )
-                        } catch (e: Exception) {
-                            android.util.Log.e("HISTORIAL", "Error al parsear reserva ${doc.id}: ${e.message}")
-                        }
-                    }
-                } catch (e: Exception) {
-                    android.util.Log.e("HISTORIAL", "Error al cargar reservas: ${e.message}")
-                    errorMessage = "Error al cargar reservas de taller"
-                }
-
-                // 2. Cargar solicitudes de domicilio
-                try {
-                    val solicitudes = db.collection("solicitudes_domicilio")
-                        .whereEqualTo("userId", currentUser.uid)
-                        .get()
-                        .await()
-
-                    android.util.Log.d("HISTORIAL", "Solicitudes encontradas: ${solicitudes.size()}")
-
-                    solicitudes.documents.forEach { doc ->
-                        try {
-                            val data = doc.data
-                            android.util.Log.d("HISTORIAL", "Solicitud ID: ${doc.id}, Data: $data")
-
-                            val fecha = doc.getTimestamp("fechaSolicitud")?.toDate()
-                                ?: doc.getTimestamp("fecha")?.toDate()
-                                ?: doc.getTimestamp("timestamp")?.toDate()
-                                ?: Date()
-
-                            items.add(
-                                HistorialItem(
-                                    id = doc.id,
-                                    tipo = "Domicilio",
-                                    nombre = "Servicio a Domicilio",
-                                    direccion = doc.getString("direccion")
-                                        ?: doc.getString("ubicacion")
-                                        ?: "Sin dirección",
-                                    estado = doc.getString("estado") ?: "PENDIENTE",
-                                    fecha = fecha,
-                                    precio = (doc.getLong("precio") ?: 0L).toInt(),
-                                    notas = doc.getString("notas")
-                                        ?: doc.getString("observaciones")
-                                        ?: doc.getString("detalles")
-                                        ?: ""
-                                )
-                            )
-                        } catch (e: Exception) {
-                            android.util.Log.e("HISTORIAL", "Error al parsear solicitud ${doc.id}: ${e.message}")
-                        }
-                    }
-                } catch (e: Exception) {
-                    android.util.Log.e("HISTORIAL", "Error al cargar solicitudes: ${e.message}")
-                    errorMessage = "Error al cargar solicitudes de domicilio"
-                }
-
-                // 3. Intentar cargar de una colección genérica "servicios" si existe
-                try {
-                    val servicios = db.collection("servicios")
-                        .whereEqualTo("userId", currentUser.uid)
-                        .get()
-                        .await()
-
-                    android.util.Log.d("HISTORIAL", "Servicios encontrados: ${servicios.size()}")
-
-                    servicios.documents.forEach { doc ->
-                        try {
-                            val data = doc.data
-                            android.util.Log.d("HISTORIAL", "Servicio ID: ${doc.id}, Data: $data")
-
-                            val fecha = doc.getTimestamp("fecha")?.toDate()
-                                ?: doc.getTimestamp("timestamp")?.toDate()
-                                ?: Date()
-
-                            items.add(
-                                HistorialItem(
-                                    id = doc.id,
-                                    tipo = doc.getString("tipo") ?: "Servicio",
-                                    nombre = doc.getString("nombre") ?: "Servicio",
-                                    direccion = doc.getString("direccion") ?: "Sin dirección",
-                                    estado = doc.getString("estado") ?: "PENDIENTE",
-                                    fecha = fecha,
-                                    precio = (doc.getLong("precio") ?: 0L).toInt(),
-                                    notas = doc.getString("notas") ?: ""
-                                )
-                            )
-                        } catch (e: Exception) {
-                            android.util.Log.e("HISTORIAL", "Error al parsear servicio ${doc.id}: ${e.message}")
-                        }
-                    }
-                } catch (e: Exception) {
-                    android.util.Log.d("HISTORIAL", "No hay colección 'servicios' o error: ${e.message}")
-                }
-
-                historial = items.sortedByDescending { it.fecha }
-
-                android.util.Log.d("HISTORIAL", "Total de items cargados: ${items.size}")
-
-                if (items.isEmpty()) {
-                    errorMessage = "No se encontraron servicios"
-                }
-            } else {
-                errorMessage = "Usuario no autenticado"
+            historial = historyRepository.getCurrentUserHistory()
+            if (historial.isEmpty()) {
+                errorMessage = "No se encontraron servicios"
             }
         } catch (e: Exception) {
             android.util.Log.e("HISTORIAL", "Error general al cargar historial: ${e.message}", e)

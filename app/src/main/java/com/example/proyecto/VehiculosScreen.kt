@@ -20,10 +20,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import com.example.proyecto.data.vehicle.FirebaseVehicleRepository
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
 // Data class para vehículos
 data class Vehiculo(
@@ -49,8 +47,7 @@ fun VehiculosScreen(
     onVehiculoClick: (Vehiculo) -> Unit
 ) {
     val scope = rememberCoroutineScope()
-    val auth = FirebaseAuth.getInstance()
-    val db = FirebaseFirestore.getInstance()
+    val vehicleRepository = remember { FirebaseVehicleRepository() }
 
     var vehiculos by remember { mutableStateOf<List<Vehiculo>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
@@ -59,33 +56,7 @@ fun VehiculosScreen(
     // Función para cargar vehículos desde Firestore
     suspend fun cargarVehiculos() {
         try {
-            val currentUser = auth.currentUser ?: return
-
-            val snapshot = db.collection("vehiculos")
-                .whereEqualTo("userId", currentUser.uid)
-                .get()
-                .await()
-
-            vehiculos = snapshot.documents.mapNotNull { doc ->
-                try {
-                    Vehiculo(
-                        id = doc.getString("id") ?: "",
-                        userId = doc.getString("userId") ?: "",
-                        marca = doc.getString("marca") ?: "",
-                        modelo = doc.getString("modelo") ?: "",
-                        año = doc.getLong("año")?.toInt() ?: 0,
-                        placa = doc.getString("placa") ?: "",
-                        kilometraje = doc.getLong("kilometraje")?.toInt() ?: 0,
-                        color = doc.getString("color") ?: "",
-                        tipo = doc.getString("tipo") ?: "auto",
-                        tipoAceite = doc.getString("tipoAceite") ?: "",
-                        fechaUltimoCambio = doc.getString("fechaUltimoCambio") ?: "",
-                        imagenUrl = doc.getString("imagenUrl") ?: ""
-                    )
-                } catch (e: Exception) {
-                    null
-                }
-            }
+            vehiculos = vehicleRepository.getCurrentUserVehicles()
         } catch (e: Exception) {
             errorMessage = "Error al cargar vehículos: ${e.message}"
         } finally {

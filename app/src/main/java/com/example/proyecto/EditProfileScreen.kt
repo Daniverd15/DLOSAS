@@ -31,10 +31,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import com.example.proyecto.data.profile.FirebaseProfileRepository
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,9 +40,7 @@ fun EditProfileScreen(
     onBackClick: () -> Unit,
     onProfileUpdated: () -> Unit
 ) {
-    val auth = FirebaseAuth.getInstance()
-    val db = FirebaseFirestore.getInstance()
-    val currentUser = auth.currentUser
+    val profileRepository = remember { FirebaseProfileRepository() }
 
     var username by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
@@ -59,12 +55,9 @@ fun EditProfileScreen(
     // Cargar datos actuales
     LaunchedEffect(Unit) {
         try {
-            val uid = currentUser?.uid
-            if (uid != null) {
-                val document = db.collection("users").document(uid).get().await()
-                username = document.getString("username") ?: ""
-                phone = document.getString("phone") ?: ""
-            }
+            val profile = profileRepository.getCurrentProfile()
+            username = profile?.username ?: ""
+            phone = profile?.phone?.takeIf { it != "No disponible" } ?: ""
         } catch (e: Exception) {
             errorMessage = "Error al cargar datos"
         } finally {
@@ -228,40 +221,17 @@ fun EditProfileScreen(
                             }
 
                             saving = true
-                            val uid = currentUser?.uid
-
-                            if (uid != null) {
-                                db.collection("users").document(uid)
-                                    .update(
-                                        mapOf(
-                                            "username" to username,
-                                            "phone" to phone
-                                        )
+                            scope.launch {
+                                try {
+                                    profileRepository.updateCurrentProfile(username, phone)
+                                    showSuccessDialog = true
+                                } catch (e: Exception) {
+                                    snackbarHostState.showSnackbar(
+                                        e.localizedMessage ?: "Error al guardar cambios"
                                     )
-                                    .addOnSuccessListener {
-                                        // Actualizar displayName en Auth
-                                        val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
-                                            .setDisplayName(username)
-                                            .build()
-
-                                        currentUser.updateProfile(profileUpdates)
-                                            .addOnSuccessListener {
-                                                saving = false
-                                                showSuccessDialog = true
-                                            }
-                                            .addOnFailureListener {
-                                                saving = false
-                                                showSuccessDialog = true
-                                            }
-                                    }
-                                    .addOnFailureListener { e ->
-                                        saving = false
-                                        scope.launch {
-                                            snackbarHostState.showSnackbar(
-                                                e.localizedMessage ?: "Error al guardar cambios"
-                                            )
-                                        }
-                                    }
+                                } finally {
+                                    saving = false
+                                }
                             }
                         },
                         enabled = !saving,

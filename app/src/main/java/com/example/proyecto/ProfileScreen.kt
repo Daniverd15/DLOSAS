@@ -22,9 +22,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.tasks.await
+import com.example.proyecto.data.profile.FirebaseProfileRepository
+import com.example.proyecto.data.profile.ProfileData
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -36,11 +35,9 @@ fun ProfileScreen(
     onNavigateToEditProfile: () -> Unit,
     onNavigateToChangePassword: () -> Unit
 ) {
-    val auth = FirebaseAuth.getInstance()
-    val currentUser = auth.currentUser
-    val db = FirebaseFirestore.getInstance()
+    val profileRepository = remember { FirebaseProfileRepository() }
 
-    var userData by remember { mutableStateOf<Map<String, Any>?>(null) }
+    var profileData by remember { mutableStateOf<ProfileData?>(null) }
     var loading by remember { mutableStateOf(true) }
 
     // Estados para las estadísticas
@@ -51,53 +48,11 @@ fun ProfileScreen(
     // Cargar datos de Firestore
     LaunchedEffect(Unit) {
         try {
-            val uid = currentUser?.uid
-            if (uid != null) {
-                // Cargar datos del usuario
-                val document = db.collection("users").document(uid).get().await()
-                userData = document.data
-
-                // Cargar estadísticas de actividad
-                // 1. Contar reservas de taller
-                val reservasSnapshot = db.collection("reservas")
-                    .whereEqualTo("userId", uid)
-                    .get()
-                    .await()
-                val cantidadReservas = reservasSnapshot.size()
-
-                // 2. Contar solicitudes de domicilio
-                val solicitudesSnapshot = db.collection("solicitudes_domicilio")
-                    .whereEqualTo("userId", uid)
-                    .get()
-                    .await()
-                val cantidadSolicitudes = solicitudesSnapshot.size()
-
-                // 3. Contar servicios de colección genérica (si existe)
-                var cantidadServicios = 0
-                try {
-                    val serviciosSnapshot = db.collection("servicios")
-                        .whereEqualTo("userId", uid)
-                        .get()
-                        .await()
-                    cantidadServicios = serviciosSnapshot.size()
-                } catch (e: Exception) {
-                    // Colección no existe o error
-                }
-
-                // Calcular totales
-                totalReservas = cantidadReservas
-                totalServicios = cantidadReservas + cantidadSolicitudes + cantidadServicios
-
-                // Calcular puntos (10 puntos por cada servicio completado)
-                val completados = reservasSnapshot.documents.count {
-                    it.getString("estado") == "COMPLETADO"
-                } + solicitudesSnapshot.documents.count {
-                    it.getString("estado") == "COMPLETADO"
-                }
-                puntosAcumulados = completados * 10
-
-                android.util.Log.d("PROFILE_STATS", "Reservas: $cantidadReservas, Solicitudes: $cantidadSolicitudes, Total: $totalServicios, Puntos: $puntosAcumulados")
-            }
+            profileData = profileRepository.getCurrentProfile()
+            val stats = profileRepository.getCurrentProfileStats()
+            totalReservas = stats.totalReservas
+            totalServicios = stats.totalServicios
+            puntosAcumulados = stats.puntosAcumulados
         } catch (e: Exception) {
             android.util.Log.e("PROFILE_ERROR", "Error al cargar datos: ${e.message}")
         } finally {
@@ -106,11 +61,11 @@ fun ProfileScreen(
     }
 
     // Usar datos de Firestore si están disponibles, sino usar datos de FirebaseAuth
-    val displayName = userData?.get("username") as? String ?: currentUser?.displayName ?: "Usuario"
-    val email = userData?.get("email") as? String ?: currentUser?.email ?: "correo@ejemplo.com"
-    val phoneNumber = userData?.get("phone") as? String ?: "No disponible"
-    val isAdmin = userData?.get("isAdmin") as? Boolean ?: false
-    val createdAt = userData?.get("createdAt") as? com.google.firebase.Timestamp
+    val displayName = profileData?.username ?: "Usuario"
+    val email = profileData?.email ?: "correo@ejemplo.com"
+    val phoneNumber = profileData?.phone ?: "No disponible"
+    val isAdmin = profileData?.isAdmin ?: false
+    val createdAt = profileData?.createdAt
 
     Scaffold(
         topBar = {
@@ -239,7 +194,7 @@ fun ProfileScreen(
                 ProfileInfoCard(
                     icon = Icons.Default.AccountCircle,
                     label = "ID de Usuario",
-                    value = currentUser?.uid?.take(8) ?: "N/A"
+                    value = profileData?.uid?.take(8) ?: "N/A"
                 )
 
                 // Sección: Cuenta

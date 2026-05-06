@@ -24,10 +24,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import com.example.proyecto.data.vehicle.FirebaseVehicleRepository
+import com.example.proyecto.data.vehicle.NewVehicleInput
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,8 +35,7 @@ fun AgregarVehiculoScreen(
     onVehiculoGuardado: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
-    val auth = FirebaseAuth.getInstance()
-    val db = FirebaseFirestore.getInstance()
+    val vehicleRepository = remember { FirebaseVehicleRepository() }
 
     var tipoVehiculo by remember { mutableStateOf("auto") }
     var marca by remember { mutableStateOf("") }
@@ -54,32 +52,17 @@ fun AgregarVehiculoScreen(
     // Función para guardar vehículo en Firestore
     suspend fun guardarVehiculo(): Result<String> {
         return try {
-            val currentUser = auth.currentUser
-                ?: return Result.failure(Exception("Usuario no autenticado"))
-
-            val vehiculoId = db.collection("vehiculos").document().id
-
-            val vehiculo = hashMapOf(
-                "id" to vehiculoId,
-                "userId" to currentUser.uid,
-                "marca" to marca,
-                "modelo" to modelo,
-                "año" to (año.toIntOrNull() ?: 0),
-                "placa" to placa.uppercase(),
-                "kilometraje" to (kilometraje.toIntOrNull() ?: 0),
-                "color" to color,
-                "tipo" to tipoVehiculo,
-                "tipoAceite" to "",
-                "fechaUltimoCambio" to "",
-                "imagenUrl" to "",
-                "fechaCreacion" to com.google.firebase.firestore.FieldValue.serverTimestamp()
+            val vehiculoId = vehicleRepository.saveVehicle(
+                NewVehicleInput(
+                    tipoVehiculo = tipoVehiculo,
+                    marca = marca,
+                    modelo = modelo,
+                    anio = año.toIntOrNull() ?: 0,
+                    placa = placa,
+                    kilometraje = kilometraje.toIntOrNull() ?: 0,
+                    color = color
+                )
             )
-
-            db.collection("vehiculos")
-                .document(vehiculoId)
-                .set(vehiculo)
-                .await()
-
             Result.success(vehiculoId)
         } catch (e: Exception) {
             Result.failure(e)
