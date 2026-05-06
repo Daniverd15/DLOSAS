@@ -40,7 +40,6 @@ class MainActivity : AppCompatActivity() {
             AppTheme {
                 val vm: AuthViewModel = viewModel()
                 val state by vm.state.collectAsState()
-                val repo = remember { UserRepository() }
 
                 val snackBarHost = remember { SnackbarHostState() }
                 val scope = rememberCoroutineScope()
@@ -102,7 +101,7 @@ class MainActivity : AppCompatActivity() {
                                             }
 
                                             else -> {
-                                                vm.signIn { uid -> repo.isAdmin(uid) }
+                                                vm.signIn()
                                             }
                                         }
                                     },
