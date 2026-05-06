@@ -140,6 +140,35 @@
 - Se ejecuto `:app:assembleDebug` inmediatamente tras refactor de `AdminPanelScreen`.
 - En ambas verificaciones la compilacion fue exitosa.
 
+## Cambio 6 - Refactor final de Domicilio para cierre C4
+
+### Que se cambio
+
+- Se agrego repositorio para servicio a domicilio:
+  - `app/src/main/java/com/example/proyecto/data/delivery/DeliveryRepository.kt`
+  - `app/src/main/java/com/example/proyecto/data/delivery/FirebaseDeliveryRepository.kt`
+- `DomicilioFragment` ahora usa repositorio para:
+  - obtener usuario actual,
+  - cargar telefono del usuario,
+  - cargar vehiculos del usuario,
+  - guardar solicitud de domicilio.
+
+### Por que se cambio
+
+- Era el ultimo modulo de presentacion con dependencias directas a Firebase.
+- Se buscaba cerrar el cumplimiento de separacion por capas segun el modelo C4 propuesto.
+
+### Beneficio obtenido
+
+- Presentacion sin acceso directo a infraestructura Firebase.
+- Consistencia arquitectonica entre Compose screens y Fragments.
+
+### Verificacion de estabilidad
+
+- Se ejecuto `:app:assembleDebug` despues del refactor.
+- Se detecto y corrigio una referencia residual (`db`) antes de cerrar.
+- Compilacion final exitosa.
+
 ## Resumen comparativo (antes vs despues)
 
 - **Antes:** `AuthViewModel` mezclaba estado UI, reglas y acceso directo a Firebase.

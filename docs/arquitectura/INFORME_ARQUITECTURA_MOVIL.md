@@ -35,6 +35,7 @@ Se retoma la aplicacion movil Android del curso de aplicaciones moviles, ubicada
 - Se aplica **inyeccion de dependencias por constructor** (`AuthRepository` en `AuthViewModel`).
 - Se refuerza la **separacion de responsabilidades**: UI -> ViewModel -> Repository -> Firebase.
 - Se extiende el mismo enfoque para modulos de sesion, perfil, vehiculos e historial mediante repositorios dedicados.
+- Se completa el desacople en `TallerScreen`, `AdminPanelScreen` y `DomicilioFragment` usando repositorios de taller, admin y domicilio.
 
 ## 5) Enfoques aplicados
 

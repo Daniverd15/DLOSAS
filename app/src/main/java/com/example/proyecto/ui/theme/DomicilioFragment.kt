@@ -11,17 +11,16 @@ import com.example.proyecto.R
 import com.google.android.material.textfield.TextInputEditText
 import android.widget.TextView
 import com.google.android.material.appbar.MaterialToolbar
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import com.example.proyecto.data.delivery.FirebaseDeliveryRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import android.app.AlertDialog
 import android.widget.LinearLayout
 import android.widget.RadioButton
 import android.widget.RadioGroup
+import java.util.UUID
 
 // Modelo simple de vehículo
 data class VehiculoSimple(
@@ -57,8 +56,7 @@ data class SolicitudDomicilio(
 
 class DomicilioFragment : Fragment() {
 
-    private val auth = FirebaseAuth.getInstance()
-    private val db = FirebaseFirestore.getInstance()
+    private val deliveryRepository = FirebaseDeliveryRepository()
     private val fragmentScope = CoroutineScope(Dispatchers.Main)
 
     private var vehiculoSeleccionado: VehiculoSimple? = null
@@ -90,8 +88,8 @@ class DomicilioFragment : Fragment() {
             tvVehiculoSeleccionado = view.findViewById(R.id.tvVehiculoSeleccionado)
 
             // Obtener datos del usuario actual
-            val currentUser = auth.currentUser
-            tvUsuario.text = "¡Hola, ${currentUser?.displayName ?: "Usuario"}!"
+            val currentUserName = deliveryRepository.getCurrentUserDisplayName() ?: "Usuario"
+            tvUsuario.text = "¡Hola, $currentUserName!"
 
             // Pre-llenar teléfono y cargar vehículos
             cargarDatosUsuario(etTelefono)
@@ -194,16 +192,11 @@ class DomicilioFragment : Fragment() {
      * Carga los datos del usuario desde Firestore para pre-llenar el teléfono
      */
     private fun cargarDatosUsuario(etTelefono: TextInputEditText) {
-        val currentUser = auth.currentUser ?: return
+        deliveryRepository.getCurrentUserId() ?: return
 
         fragmentScope.launch {
             try {
-                val userDoc = db.collection("users")
-                    .document(currentUser.uid)
-                    .get()
-                    .await()
-
-                val phone = userDoc.getString("phone")
+                val phone = deliveryRepository.getCurrentUserPhone()
                 withContext(Dispatchers.Main) {
                     if (!phone.isNullOrEmpty()) {
                         etTelefono.setText(phone)
@@ -219,28 +212,11 @@ class DomicilioFragment : Fragment() {
      * Carga los vehículos del usuario desde Firestore
      */
     private fun cargarVehiculosUsuario() {
-        val currentUser = auth.currentUser ?: return
+        deliveryRepository.getCurrentUserId() ?: return
 
         fragmentScope.launch {
             try {
-                val snapshot = db.collection("vehiculos")
-                    .whereEqualTo("userId", currentUser.uid)
-                    .get()
-                    .await()
-
-                val vehiculos = snapshot.documents.mapNotNull { doc ->
-                    try {
-                        VehiculoSimple(
-                            id = doc.getString("id") ?: "",
-                            marca = doc.getString("marca") ?: "",
-                            modelo = doc.getString("modelo") ?: "",
-                            placa = doc.getString("placa") ?: "",
-                            tipo = doc.getString("tipo") ?: "auto"
-                        )
-                    } catch (e: Exception) {
-                        null
-                    }
-                }
+                val vehiculos = deliveryRepository.getCurrentUserVehicles()
 
                 withContext(Dispatchers.Main) {
                     vehiculosDisponibles = vehiculos
@@ -331,19 +307,13 @@ class DomicilioFragment : Fragment() {
     ): Result<String> {
         return withContext(Dispatchers.IO) {
             try {
-                val currentUser = auth.currentUser
+                val uid = deliveryRepository.getCurrentUserId()
                     ?: return@withContext Result.failure(Exception("Usuario no autenticado"))
-
-                val uid = currentUser.uid
-
-                // Obtener datos del usuario desde Firestore
-                val userDoc = db.collection("users").document(uid).get().await()
-                val userName = userDoc.getString("username") ?: currentUser.displayName ?: "Usuario"
-                val userEmail = currentUser.email ?: ""
-                val userPhone = userDoc.getString("phone") ?: telefono
+                val userEmail = deliveryRepository.getCurrentUserEmail() ?: ""
+                val (userName, userPhone) = deliveryRepository.getCurrentUserNameAndPhone(telefono)
 
                 // Generar ID único para la solicitud
-                val solicitudId = db.collection("solicitudes_domicilio").document().id
+                val solicitudId = UUID.randomUUID().toString()
 
                 val vehiculo = vehiculoSeleccionado
                     ?: return@withContext Result.failure(Exception("No se ha seleccionado vehículo"))
@@ -369,11 +339,7 @@ class DomicilioFragment : Fragment() {
                     vehiculoTipo = vehiculo.tipo
                 )
 
-                // Guardar en Firestore
-                db.collection("solicitudes_domicilio")
-                    .document(solicitudId)
-                    .set(solicitud)
-                    .await()
+                deliveryRepository.saveSolicitud(solicitud)
 
                 android.util.Log.d("DOMICILIO_SUCCESS", "Solicitud guardada: $solicitudId")
                 Result.success(solicitudId)
