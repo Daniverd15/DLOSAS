@@ -107,6 +107,39 @@
 
 - Se ejecuto `:app:assembleDebug` despues de cada fase de refactor y la compilacion resulto exitosa.
 
+## Cambio 5 - Refactor seguro de Taller y Panel Admin
+
+### Que se cambio
+
+- Se agrego repositorio para flujo de reservas de taller:
+  - `app/src/main/java/com/example/proyecto/data/workshop/WorkshopRepository.kt`
+  - `app/src/main/java/com/example/proyecto/data/workshop/FirebaseWorkshopRepository.kt`
+- `TallerScreen` ahora usa `FirebaseWorkshopRepository` para guardar reservas y obtener datos del usuario.
+- Se agrego repositorio para operaciones de administrador:
+  - `app/src/main/java/com/example/proyecto/data/admin/AdminRepository.kt`
+  - `app/src/main/java/com/example/proyecto/data/admin/FirebaseAdminRepository.kt`
+- `AdminPanelScreen` ahora consume repositorio para:
+  - cargar solicitudes,
+  - actualizar estado de solicitudes,
+  - cargar usuarios,
+  - banear/desbanear usuarios.
+
+### Por que se cambio
+
+- Eran los dos modulos funcionales restantes con alto acceso directo a Firebase desde UI.
+- Se mantuvo la prioridad de no romper comportamiento existente.
+
+### Beneficio obtenido
+
+- La capa de presentacion queda mas limpia y enfocada en estado/UI.
+- Mejora el cumplimiento del modelo C4 por separacion de responsabilidades.
+
+### Verificacion de estabilidad
+
+- Se ejecuto `:app:assembleDebug` inmediatamente tras refactor de `TallerScreen`.
+- Se ejecuto `:app:assembleDebug` inmediatamente tras refactor de `AdminPanelScreen`.
+- En ambas verificaciones la compilacion fue exitosa.
+
 ## Resumen comparativo (antes vs despues)
 
 - **Antes:** `AuthViewModel` mezclaba estado UI, reglas y acceso directo a Firebase.

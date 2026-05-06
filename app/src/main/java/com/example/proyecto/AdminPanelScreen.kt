@@ -22,10 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
+import com.example.proyecto.data.admin.FirebaseAdminRepository
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -72,7 +70,7 @@ data class LubricentroData(
 fun AdminPanelScreen(
     onLogout: () -> Unit
 ) {
-    val db = FirebaseFirestore.getInstance()
+    val adminRepository = remember { FirebaseAdminRepository() }
     val scope = rememberCoroutineScope()
 
     var selectedMainTab by remember { mutableStateOf(0) }
@@ -122,8 +120,8 @@ fun AdminPanelScreen(
 
             // Contenido según tab seleccionado
             when (selectedMainTab) {
-                0 -> PedidosTab(db, scope)
-                1 -> UsuariosTab(db, scope)
+                0 -> PedidosTab(adminRepository, scope)
+                1 -> UsuariosTab(adminRepository, scope)
                 2 -> LubricentrosTab()
             }
         }
@@ -132,7 +130,7 @@ fun AdminPanelScreen(
 
 // ==================== TAB DE PEDIDOS ====================
 @Composable
-fun PedidosTab(db: FirebaseFirestore, scope: kotlinx.coroutines.CoroutineScope) {
+fun PedidosTab(adminRepository: FirebaseAdminRepository, scope: kotlinx.coroutines.CoroutineScope) {
     var solicitudes by remember { mutableStateOf<List<Solicitud>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var selectedTab by remember { mutableStateOf(0) }
@@ -143,66 +141,7 @@ fun PedidosTab(db: FirebaseFirestore, scope: kotlinx.coroutines.CoroutineScope) 
     LaunchedEffect(refreshTrigger) {
         isLoading = true
         try {
-            val todasSolicitudes = mutableListOf<Solicitud>()
-
-            val reservasTaller = db.collection("reservas")
-                .orderBy("fechaReserva", Query.Direction.DESCENDING)
-                .get()
-                .await()
-
-            reservasTaller.documents.forEach { doc ->
-                try {
-                    todasSolicitudes.add(
-                        Solicitud(
-                            id = doc.getString("reservaId") ?: doc.id,
-                            clienteNombre = doc.getString("userName") ?: "Sin nombre",
-                            clienteTelefono = doc.getString("userPhone") ?: "Sin teléfono",
-                            direccion = doc.getString("lubricentroDireccion") ?: "Sin dirección",
-                            tipoServicio = "Taller - ${doc.getString("lubricentroNombre") ?: ""}",
-                            estado = doc.getString("estado") ?: "PENDIENTE",
-                            fecha = doc.getTimestamp("fechaReserva")?.toDate() ?: Date(),
-                            precio = doc.getLong("precio")?.toInt() ?: 0,
-                            notas = doc.getString("notas") ?: "",
-                            userEmail = doc.getString("userEmail") ?: "",
-                            userId = doc.getString("userId") ?: "",
-                            coleccion = "reservas"
-                        )
-                    )
-                } catch (e: Exception) {
-                    android.util.Log.e("ADMIN_ERROR", "Error: ${e.message}")
-                }
-            }
-
-            val solicitudesDomicilio = db.collection("solicitudes_domicilio")
-                .orderBy("fechaSolicitud", Query.Direction.DESCENDING)
-                .get()
-                .await()
-
-            solicitudesDomicilio.documents.forEach { doc ->
-                try {
-                    todasSolicitudes.add(
-                        Solicitud(
-                            id = doc.getString("solicitudId") ?: doc.id,
-                            clienteNombre = doc.getString("userName") ?: "Sin nombre",
-                            clienteTelefono = doc.getString("telefonoContacto") ?: doc.getString("userPhone") ?: "Sin teléfono",
-                            direccion = doc.getString("direccion") ?: "Sin dirección",
-                            tipoServicio = "Domicilio",
-                            estado = doc.getString("estado") ?: "PENDIENTE",
-                            fecha = doc.getTimestamp("fechaSolicitud")?.toDate() ?: Date(),
-                            precio = 0,
-                            notas = doc.getString("notas") ?: "",
-                            userEmail = doc.getString("userEmail") ?: "",
-                            userId = doc.getString("userId") ?: "",
-                            coleccion = "solicitudes_domicilio"
-                        )
-                    )
-                } catch (e: Exception) {
-                    android.util.Log.e("ADMIN_ERROR", "Error: ${e.message}")
-                }
-            }
-
-            solicitudes = todasSolicitudes.sortedByDescending { it.fecha }
-
+            solicitudes = adminRepository.getAllSolicitudes()
         } catch (e: Exception) {
             android.util.Log.e("ADMIN_ERROR", "Error: ${e.message}")
         }
@@ -260,10 +199,7 @@ fun PedidosTab(db: FirebaseFirestore, scope: kotlinx.coroutines.CoroutineScope) 
                         onEstadoChange = { nuevoEstado ->
                             scope.launch {
                                 try {
-                                    db.collection(solicitud.coleccion)
-                                        .document(solicitud.id)
-                                        .update("estado", nuevoEstado)
-                                        .await()
+                                    adminRepository.updateSolicitudEstado(solicitud.coleccion, solicitud.id, nuevoEstado)
                                     refreshTrigger++
                                 } catch (e: Exception) {
                                     android.util.Log.e("ADMIN_ERROR", "Error: ${e.message}")
@@ -291,7 +227,7 @@ fun PedidosTab(db: FirebaseFirestore, scope: kotlinx.coroutines.CoroutineScope) 
 
 // ==================== TAB DE USUARIOS ====================
 @Composable
-fun UsuariosTab(db: FirebaseFirestore, scope: kotlinx.coroutines.CoroutineScope) {
+fun UsuariosTab(adminRepository: FirebaseAdminRepository, scope: kotlinx.coroutines.CoroutineScope) {
     var usuarios by remember { mutableStateOf<List<Usuario>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var refreshTrigger by remember { mutableStateOf(0) }
@@ -300,45 +236,7 @@ fun UsuariosTab(db: FirebaseFirestore, scope: kotlinx.coroutines.CoroutineScope)
     LaunchedEffect(refreshTrigger) {
         isLoading = true
         try {
-            val usuariosSnapshot = db.collection("users").get().await()
-            val listaUsuarios = mutableListOf<Usuario>()
-
-            usuariosSnapshot.documents.forEach { doc ->
-                try {
-                    val userId = doc.id
-
-                    // Contar servicios del usuario
-                    val reservas = db.collection("reservas")
-                        .whereEqualTo("userId", userId)
-                        .get()
-                        .await()
-                        .size()
-
-                    val solicitudes = db.collection("solicitudes_domicilio")
-                        .whereEqualTo("userId", userId)
-                        .get()
-                        .await()
-                        .size()
-
-                    listaUsuarios.add(
-                        Usuario(
-                            id = userId,
-                            username = doc.getString("username") ?: "Sin nombre",
-                            email = doc.getString("email") ?: "Sin email",
-                            phone = doc.getString("phone") ?: "Sin teléfono",
-                            isAdmin = doc.getBoolean("isAdmin") ?: false,
-                            isBanned = doc.getBoolean("isBanned") ?: false,
-                            createdAt = doc.getTimestamp("createdAt")?.toDate(),
-                            totalServicios = reservas + solicitudes
-                        )
-                    )
-                } catch (e: Exception) {
-                    android.util.Log.e("ADMIN_ERROR", "Error al cargar usuario: ${e.message}")
-                }
-            }
-
-            usuarios = listaUsuarios.sortedByDescending { it.createdAt }
-
+            usuarios = adminRepository.getAllUsuarios()
         } catch (e: Exception) {
             android.util.Log.e("ADMIN_ERROR", "Error al cargar usuarios: ${e.message}")
         }
@@ -410,10 +308,7 @@ fun UsuariosTab(db: FirebaseFirestore, scope: kotlinx.coroutines.CoroutineScope)
                         onBanToggle = {
                             scope.launch {
                                 try {
-                                    db.collection("users")
-                                        .document(usuario.id)
-                                        .update("isBanned", !usuario.isBanned)
-                                        .await()
+                                    adminRepository.setUserBanned(usuario.id, !usuario.isBanned)
                                     refreshTrigger++
                                 } catch (e: Exception) {
                                     android.util.Log.e("ADMIN_ERROR", "Error: ${e.message}")

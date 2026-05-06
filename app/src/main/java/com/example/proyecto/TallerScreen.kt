@@ -23,10 +23,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import com.example.proyecto.data.workshop.FirebaseWorkshopRepository
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -69,8 +67,7 @@ fun TallerScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val auth = FirebaseAuth.getInstance()
-    val db = FirebaseFirestore.getInstance()
+    val workshopRepository = remember { FirebaseWorkshopRepository() }
 
     var showSuccessDialog by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
@@ -142,21 +139,18 @@ fun TallerScreen(
     // Función para guardar la reserva en Firestore
     suspend fun guardarReserva(lubricentro: Lubricentro): Result<String> {
         return try {
-            val currentUser = auth.currentUser ?: return Result.failure(Exception("Usuario no autenticado"))
-            val uid = currentUser.uid
-
-            // Obtener datos del usuario desde Firestore
-            val userDoc = db.collection("users").document(uid).get().await()
-            val userName = userDoc.getString("username") ?: "Usuario"
-            val userPhone = userDoc.getString("phone") ?: "No disponible"
+            val uid = workshopRepository.getCurrentUserId()
+                ?: return Result.failure(Exception("Usuario no autenticado"))
+            val userEmail = workshopRepository.getCurrentUserEmail() ?: ""
+            val (userName, userPhone) = workshopRepository.getCurrentUserNameAndPhone()
 
             // Generar ID único para la reserva
-            val reservaId = db.collection("reservas").document().id
+            val reservaId = UUID.randomUUID().toString()
 
             val reserva = ReservaTaller(
                 reservaId = reservaId,
                 userId = uid,
-                userEmail = currentUser.email ?: "",
+                userEmail = userEmail,
                 userName = userName,
                 userPhone = userPhone,
                 lubricentroId = lubricentro.id,
@@ -169,11 +163,7 @@ fun TallerScreen(
                 notas = "Reserva desde app móvil"
             )
 
-            // Guardar en Firestore
-            db.collection("reservas")
-                .document(reservaId)
-                .set(reserva)
-                .await()
+            workshopRepository.saveReservation(reserva)
 
             Result.success(reservaId)
         } catch (e: Exception) {
